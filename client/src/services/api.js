@@ -37,11 +37,14 @@ api.interceptors.response.use(
             removeToken(); // Clear expired or invalid token
         }
         
-        // Extract clean error message
-        const errorMessage =
+        let errorMessage =
             error.response?.data?.message ||
             error.message ||
             "An unexpected error occurred. Please try again.";
+
+        if (error.message === "Network Error" && !error.response) {
+            errorMessage = "Network Error: Cannot connect to server. Please verify backend is running on http://localhost:5000";
+        }
 
         return Promise.reject(new Error(errorMessage));
     }
