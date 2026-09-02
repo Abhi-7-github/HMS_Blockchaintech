@@ -1,7 +1,19 @@
+const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const Otp = require("../models/Otp");
 const { sendOTP } = require("../utils/sendEmail");
 const crypto = require("crypto");
+
+/**
+ * Helper to generate JWT Token for user
+ */
+const generateToken = (userId, role) => {
+    return jwt.sign(
+        { id: userId, role },
+        process.env.JWT_SECRET,
+        { expiresIn: process.env.JWT_EXPIRES_IN || "7d" }
+    );
+};
 
 /**
  * Helper to generate secure 6-digit OTP string
@@ -38,7 +50,7 @@ const register = async (req, res) => {
         }
 
         // 3. Validate password strength
-        const minLength = parseInt(process.env.PASSWORD_MIN_LENGTH, 10);
+        const minLength = parseInt(process.env.PASSWORD_MIN_LENGTH || "6", 10);
         if (password.length < minLength) {
             return res.status(400).json({
                 success: false,
@@ -48,7 +60,9 @@ const register = async (req, res) => {
 
         // 4. Role restriction dynamically read from process.env
         const formattedRole = role.toUpperCase().trim();
-        const allowedRoles = (process.env.ALLOWED_SELF_REGISTER_ROLES || "").split(",").map((r) => r.trim());
+        const allowedRoles = (process.env.ALLOWED_SELF_REGISTER_ROLES || "PATIENT,DOCTOR")
+            .split(",")
+            .map((r) => r.trim());
 
         if (!allowedRoles.includes(formattedRole)) {
             return res.status(400).json({
@@ -250,8 +264,100 @@ const resendOtp = async (req, res) => {
     }
 };
 
+/**
+ * @desc    Login user & return JWT token
+ * @route   POST /api/auth/login
+ * @access  Public
+ */
+const login = async (req, res) => {
+    try {
+        const { email, password } = req.body;
+
+        // 1. Validate inputs
+        if (!email || !password) {
+            return res.status(400).json({
+                success: false,
+                message: "Please provide email and password",
+            });
+        }
+
+        const normalizedEmail = email.toLowerCase().trim();
+
+        // 2. Find user by email (explicitly select password)
+        const user = await User.findOne({ email: normalizedEmail }).select("+password");
+
+        if (!user) {
+            return res.status(401).json({
+                success: false,
+                message: "Invalid email or password",
+            });
+        }
+
+        // 3. Compare password using user instance method
+        const isMatch = await user.comparePassword(password);
+        if (!isMatch) {
+            return res.status(401).json({
+                success: false,
+                message: "Invalid email or password",
+            });
+        }
+
+        // 4. Generate JWT Token (payload contains user ID and role)
+        const token = generateToken(user._id, user.role);
+
+        // 5. Prepare safe user object (excluding password)
+        const userResponse = {
+            _id: user._id,
+            name: user.name,
+            email: user.email,
+            phone: user.phone,
+            role: user.role,
+            isVerified: user.isVerified,
+            createdAt: user.createdAt,
+            updatedAt: user.updatedAt,
+        };
+
+        return res.status(200).json({
+            success: true,
+            message: "Login successful",
+            token,
+            user: userResponse,
+        });
+    } catch (error) {
+        console.error("Error in user login:", error.message);
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error during login",
+            error: error.message,
+        });
+    }
+};
+
+/**
+ * @desc    Get currently logged in user profile
+ * @route   GET /api/auth/me
+ * @access  Private
+ */
+const getMe = async (req, res) => {
+    try {
+        return res.status(200).json({
+            success: true,
+            user: req.user,
+        });
+    } catch (error) {
+        console.error("Error in getMe:", error.message);
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error fetching user profile",
+            error: error.message,
+        });
+    }
+};
+
 module.exports = {
     register,
     verifyOtp,
     resendOtp,
+    login,
+    getMe,
 };
