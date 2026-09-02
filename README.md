@@ -1,6 +1,6 @@
-# HMS BlockchainTech - Hospital Management System
+# AmedicK (HMS BlockchainTech) - Hospital Management System
 
-A modern, full-stack Hospital Management System (HMS) built with a Node.js/Express backend and React + Tailwind CSS frontend architecture.
+A modern, full-stack Hospital Management System built with a Node.js/Express backend and React + Tailwind CSS frontend architecture.
 
 ---
 
