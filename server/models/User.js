@@ -39,6 +39,10 @@ const userSchema = new mongoose.Schema(
             uppercase: true,
             trim: true,
         },
+        isVerified: {
+            type: Boolean,
+            default: false,
+        },
     },
     {
         timestamps: true,
@@ -46,11 +50,11 @@ const userSchema = new mongoose.Schema(
 );
 
 // Hash password before saving if modified
-userSchema.pre("save", async function (next) {
-    if (!this.isModified("password")) return next();
-    const salt = await bcrypt.genSalt(10);
+userSchema.pre("save", async function () {
+    if (!this.isModified("password")) return;
+    const saltRounds = parseInt(process.env.BCRYPT_SALT_ROUNDS, 10);
+    const salt = await bcrypt.genSalt(saltRounds);
     this.password = await bcrypt.hash(this.password, salt);
-    next();
 });
 
 // Instance method to compare password

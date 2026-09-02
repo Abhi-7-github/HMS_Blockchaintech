@@ -1,5 +1,8 @@
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
+const Otp = require("../models/Otp");
+const { sendOTP } = require("../utils/sendEmail");
+const crypto = require("crypto");
 
 /**
  * Helper to generate JWT Token for user
@@ -13,7 +16,14 @@ const generateToken = (userId, role) => {
 };
 
 /**
- * @desc    Register a new user (PATIENT or DOCTOR)
+ * Helper to generate secure 6-digit OTP string
+ */
+const generateOTP = () => {
+    return crypto.randomInt(100000, 999999).toString();
+};
+
+/**
+ * @desc    Register a new user and send OTP to email
  * @route   POST /api/auth/register
  * @access  Public
  */
@@ -48,7 +58,7 @@ const register = async (req, res) => {
             });
         }
 
-        // 4. Role restriction: Only PATIENT and DOCTOR can self-register
+        // 4. Role restriction dynamically read from process.env
         const formattedRole = role.toUpperCase().trim();
         const allowedRoles = (process.env.ALLOWED_SELF_REGISTER_ROLES || "PATIENT,DOCTOR")
             .split(",")
@@ -61,45 +71,194 @@ const register = async (req, res) => {
             });
         }
 
-        // 5. Check for duplicate email
+        // 5. Check if user exists
         const existingUser = await User.findOne({ email: normalizedEmail });
         if (existingUser) {
-            return res.status(409).json({
-                success: false,
-                message: "An account with this email address already exists",
-            });
+            if (existingUser.isVerified) {
+                return res.status(409).json({
+                    success: false,
+                    message: "An account with this email address already exists and is verified.",
+                });
+            } else {
+                // Remove previous unverified account registration to re-register clean
+                await User.deleteOne({ _id: existingUser._id });
+            }
         }
 
-        // 6. Create new user (password is automatically hashed via Mongoose pre-save hook)
+        // 6. Create new unverified user
         const user = await User.create({
             name: name.trim(),
             email: normalizedEmail,
             phone: phone.trim(),
             password,
             role: formattedRole,
+            isVerified: false,
         });
 
-        // 7. Format user object without password
-        const userResponse = {
-            _id: user._id,
-            name: user.name,
-            email: user.email,
-            phone: user.phone,
-            role: user.role,
-            createdAt: user.createdAt,
-            updatedAt: user.updatedAt,
-        };
+        // 7. Generate and save OTP
+        const otpCode = generateOTP();
+        await Otp.deleteMany({ email: normalizedEmail }); // Clear previous OTPs if any
+        await Otp.create({
+            email: normalizedEmail,
+            otp: otpCode,
+        });
+
+        // 8. Send OTP via email
+        await sendOTP(normalizedEmail, otpCode);
 
         return res.status(201).json({
             success: true,
-            message: "User registered successfully",
-            data: userResponse,
+            message: "Registration initiated. An OTP has been sent to your email address.",
+            data: {
+                email: user.email,
+                isVerified: false,
+            },
         });
     } catch (error) {
         console.error("Error in user registration:", error.message);
         return res.status(500).json({
             success: false,
             message: "Internal server error during registration",
+            error: error.message,
+        });
+    }
+};
+
+/**
+ * @desc    Verify OTP and activate user account
+ * @route   POST /api/auth/verify-otp
+ * @access  Public
+ */
+const verifyOtp = async (req, res) => {
+    try {
+        const { email, otp } = req.body;
+
+        if (!email || !otp) {
+            return res.status(400).json({
+                success: false,
+                message: "Please provide both email and OTP",
+            });
+        }
+
+        const normalizedEmail = email.toLowerCase().trim();
+
+        // Check if user exists
+        const user = await User.findOne({ email: normalizedEmail });
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "User account not found. Please register first.",
+            });
+        }
+
+        if (user.isVerified) {
+            return res.status(400).json({
+                success: false,
+                message: "Account is already verified. You can proceed to log in.",
+            });
+        }
+
+        // Find existing OTP record
+        const otpRecord = await Otp.findOne({ email: normalizedEmail });
+        if (!otpRecord) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid or expired OTP. Please request a new OTP.",
+            });
+        }
+
+        if (otpRecord.otp !== otp.trim()) {
+            return res.status(400).json({
+                success: false,
+                message: "Incorrect OTP code. Please check and try again.",
+            });
+        }
+
+        // Mark user as verified
+        user.isVerified = true;
+        await user.save();
+
+        // Delete used OTP
+        await Otp.deleteMany({ email: normalizedEmail });
+
+        const userResponse = {
+            _id: user._id,
+            name: user.name,
+            email: user.email,
+            phone: user.phone,
+            role: user.role,
+            isVerified: user.isVerified,
+            createdAt: user.createdAt,
+            updatedAt: user.updatedAt,
+        };
+
+        return res.status(200).json({
+            success: true,
+            message: "Email verified successfully. Registration complete.",
+            data: userResponse,
+        });
+    } catch (error) {
+        console.error("Error in OTP verification:", error.message);
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error during OTP verification",
+            error: error.message,
+        });
+    }
+};
+
+/**
+ * @desc    Resend OTP to email
+ * @route   POST /api/auth/resend-otp
+ * @access  Public
+ */
+const resendOtp = async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            return res.status(400).json({
+                success: false,
+                message: "Please provide your email address",
+            });
+        }
+
+        const normalizedEmail = email.toLowerCase().trim();
+
+        const user = await User.findOne({ email: normalizedEmail });
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "User account not found with this email",
+            });
+        }
+
+        if (user.isVerified) {
+            return res.status(400).json({
+                success: false,
+                message: "This account is already verified.",
+            });
+        }
+
+        // Generate and send new OTP
+        const otpCode = generateOTP();
+        await Otp.deleteMany({ email: normalizedEmail });
+        await Otp.create({
+            email: normalizedEmail,
+            otp: otpCode,
+        });
+
+        await sendOTP(normalizedEmail, otpCode);
+
+        return res.status(200).json({
+            success: true,
+            message: "A new OTP has been sent to your email address.",
+        });
+    } catch (error) {
+        console.error("Error resending OTP:", error.message);
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error while resending OTP",
             error: error.message,
         });
     }
@@ -124,7 +283,7 @@ const login = async (req, res) => {
 
         const normalizedEmail = email.toLowerCase().trim();
 
-        // 2. Find user by email (explicitly select password because select: false in schema)
+        // 2. Find user by email (explicitly select password)
         const user = await User.findOne({ email: normalizedEmail }).select("+password");
 
         if (!user) {
@@ -153,6 +312,7 @@ const login = async (req, res) => {
             email: user.email,
             phone: user.phone,
             role: user.role,
+            isVerified: user.isVerified,
             createdAt: user.createdAt,
             updatedAt: user.updatedAt,
         };
@@ -196,6 +356,8 @@ const getMe = async (req, res) => {
 
 module.exports = {
     register,
+    verifyOtp,
+    resendOtp,
     login,
     getMe,
 };
