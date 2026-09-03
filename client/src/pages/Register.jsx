@@ -140,157 +140,129 @@ const Register = () => {
     };
 
     return (
-        <div className="min-h-screen bg-healthcare-gradient flex items-center justify-center p-4 md:p-8">
-            <div className="w-full max-w-5xl bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-100 grid grid-cols-1 lg:grid-cols-12 min-h-[680px]">
+        <div className="min-h-screen bg-[#F0E7D5] text-[#212842] flex items-center justify-center p-4 md:p-8">
+            <div className="w-full max-w-5xl bg-[#FAF6EE] rounded-lg shadow-xl overflow-hidden border border-[#212842]/15 grid grid-cols-1 lg:grid-cols-12 min-h-[660px]">
                 
-                {/* Left Side: Healthcare Branding Panel */}
-                <div className="lg:col-span-5 bg-gradient-to-br from-slate-900 via-teal-950 to-sky-950 text-white p-8 md:p-12 flex flex-col justify-between relative overflow-hidden">
-                    <div className="absolute -right-16 -bottom-16 w-64 h-64 bg-teal-500/10 rounded-full blur-3xl pointer-events-none"></div>
-                    <div className="absolute -left-16 -top-16 w-64 h-64 bg-sky-500/10 rounded-full blur-3xl pointer-events-none"></div>
-
+                {/* Left Side: Healthcare Branding Panel (Midnight Indigo) */}
+                <div className="lg:col-span-5 bg-[#212842] text-[#F0E7D5] p-8 md:p-12 flex flex-col justify-between relative">
                     <div>
                         {/* Healthcare Logo */}
-                        <div className="flex items-center space-x-3 mb-8">
-                            <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-teal-500 to-sky-400 flex items-center justify-center shadow-lg shadow-teal-500/30">
-                                <svg className="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4" />
-                                </svg>
-                            </div>
+                        <div className="flex items-center space-x-4 mb-8 pb-6 border-b border-[#F0E7D5]/15">
+                            <img
+                                src="/logo.jpg"
+                                alt="AmedicK Official Logo"
+                                className="w-14 h-14 object-cover border border-[#F0E7D5]/40 rounded-sm bg-[#FAF6EE]"
+                            />
                             <div>
-                                <span className="text-2xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-100 to-sky-200 bg-clip-text text-transparent">
+                                <span className="text-xl font-bold tracking-tight text-[#F0E7D5] block uppercase">
                                     AmedicK
                                 </span>
-                                <span className="block text-xs text-teal-400 font-medium tracking-wide uppercase">
-                                    Healthcare System
+                                <span className="text-[9px] text-[#F0E7D5]/80 tracking-wider uppercase block">
+                                    CARE ROOTED IN COMPASSION
+                                </span>
+                                <span className="text-[10px] text-[#F0E7D5]/60 font-serif tracking-wide block mt-0.5">
+                                    || सर्वे सन्तु निरामया: ||
                                 </span>
                             </div>
                         </div>
 
-                        <h1 className="text-3xl font-bold leading-tight mb-4 text-white">
-                            {step === 1 ? "Join the Future of Medical Care" : "Email Verification Step"}
+                        <h1 className="text-2xl md:text-3xl font-serif font-bold leading-snug mb-4 text-[#F0E7D5]">
+                            {step === 1 ? "Account Registration" : "Email Verification"}
                         </h1>
-                        <p className="text-slate-300 text-sm leading-relaxed mb-8">
+                        <p className="text-[#F0E7D5]/80 text-sm leading-relaxed mb-8">
                             {step === 1
-                                ? "Create your verified portal account as a Patient or Doctor to manage clinical workflows, appointments, and medical history."
-                                : `We've dispatched a security OTP to ${formData.email}. Please verify your identity to activate your account.`}
+                                ? "Register your authenticated portal account as a Patient or Doctor to access clinical workflows, appointments, and medical history."
+                                : `A security OTP code was sent to ${formData.email}. Please enter it below to complete verification.`}
                         </p>
                     </div>
 
-                    {/* Progress Indicator */}
-                    <div className="pt-6 border-t border-slate-800/80">
-                        <div className="flex items-center justify-between text-xs text-slate-400 mb-2">
-                            <span>Registration Progress</span>
-                            <span className="font-semibold text-teal-400">Step {step} of 2</span>
+                    {/* Progress Step Indicator */}
+                    <div className="pt-6 border-t border-[#F0E7D5]/15">
+                        <div className="flex items-center justify-between text-xs text-[#F0E7D5]/70 mb-2 font-mono uppercase">
+                            <span>Verification Progress</span>
+                            <span className="font-bold text-[#F0E7D5]">Step {step} / 2</span>
                         </div>
-                        <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                        <div className="w-full bg-[#181E32] h-1.5 rounded-none overflow-hidden">
                             <div
-                                className="bg-gradient-to-r from-teal-400 to-sky-400 h-full transition-all duration-500"
+                                className="bg-[#F0E7D5] h-full transition-all duration-300"
                                 style={{ width: step === 1 ? "50%" : "100%" }}
                             ></div>
                         </div>
                     </div>
                 </div>
 
-                {/* Right Side: Registration Form */}
-                <div className="lg:col-span-7 p-8 md:p-12 flex flex-col justify-center bg-white">
+                {/* Right Side: Registration Form (Vanilla Cream) */}
+                <div className="lg:col-span-7 p-8 md:p-12 flex flex-col justify-center bg-[#FAF6EE]">
                     <div className="max-w-md w-full mx-auto">
                         <div className="mb-6">
-                            <h2 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">
-                                {step === 1 ? "Create Your Account" : "Verify Your Email"}
+                            <h2 className="text-2xl font-bold text-[#212842] tracking-tight">
+                                {step === 1 ? "Create Account" : "Verify OTP Code"}
                             </h2>
-                            <p className="text-slate-500 text-sm mt-1">
+                            <p className="text-[#212842]/70 text-sm mt-1">
                                 {step === 1
-                                    ? "Fill in your information to start using AmedicK."
-                                    : "Enter the 6-digit OTP code sent to your email address."}
+                                    ? "Provide your details to register with AmedicK."
+                                    : "Enter the 6-digit OTP verification code."}
                             </p>
                         </div>
 
-                        {/* Backend Error Alert */}
+                        {/* Error Alert */}
                         {backendError && (
-                            <div className="mb-6 p-4 rounded-2xl bg-rose-50 border border-rose-200/80 flex items-start space-x-3 text-rose-700 text-sm animate-fade-in">
-                                <svg className="w-5 h-5 text-rose-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                <div className="flex-1">
-                                    <span className="font-semibold block mb-0.5">Registration Error</span>
-                                    <span>{backendError}</span>
-                                </div>
+                            <div className="mb-6 p-4 rounded-md bg-[#F0E7D5] border border-[#212842] text-[#212842] text-sm">
+                                <span className="font-bold block mb-0.5">Registration Error</span>
+                                <span>{backendError}</span>
                             </div>
                         )}
 
                         {/* Success Message Alert */}
                         {successMessage && (
-                            <div className="mb-6 p-4 rounded-2xl bg-teal-50 border border-teal-200/80 flex items-start space-x-3 text-teal-800 text-sm animate-fade-in">
-                                <svg className="w-5 h-5 text-teal-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                                </svg>
-                                <div className="flex-1">
-                                    <span className="font-semibold block mb-0.5">Success</span>
-                                    <span>{successMessage}</span>
-                                </div>
+                            <div className="mb-6 p-4 rounded-md bg-[#212842] text-[#F0E7D5] text-sm">
+                                <span className="font-bold block mb-0.5">Status Update</span>
+                                <span>{successMessage}</span>
                             </div>
                         )}
 
-                        {/* STEP 1: INITIAL REGISTRATION FORM */}
+                        {/* STEP 1: REGISTRATION FORM */}
                         {step === 1 && (
                             <form onSubmit={handleRegisterSubmit} className="space-y-4" noValidate>
-                                {/* Role Selector Cards (Patient & Doctor ONLY) */}
+                                {/* Role Selection */}
                                 <div>
-                                    <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
-                                        Select Role
+                                    <label className="block text-xs font-bold text-[#212842] uppercase tracking-wider mb-2">
+                                        Select Portal Role
                                     </label>
                                     <div className="grid grid-cols-2 gap-3">
                                         {/* Patient Card */}
                                         <button
                                             type="button"
                                             onClick={() => setFormData((prev) => ({ ...prev, role: "PATIENT" }))}
-                                            className={`p-3.5 rounded-2xl border text-left transition-all duration-200 flex items-center space-x-3 cursor-pointer ${
+                                            className={`p-3.5 rounded-md border text-left transition-all cursor-pointer ${
                                                 formData.role === "PATIENT"
-                                                    ? "border-sky-500 bg-sky-50/60 ring-2 ring-sky-200"
-                                                    : "border-slate-200 hover:border-slate-300 bg-slate-50/50"
+                                                    ? "border-[#212842] border-2 bg-[#F0E7D5] text-[#212842]"
+                                                    : "border-[#212842]/20 bg-[#FAF6EE] text-[#212842]/70 hover:border-[#212842]/40"
                                             }`}
                                         >
-                                            <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${
-                                                formData.role === "PATIENT" ? "bg-sky-600 text-white" : "bg-slate-200 text-slate-600"
-                                            }`}>
-                                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                                </svg>
-                                            </div>
-                                            <div>
-                                                <span className="block font-bold text-sm text-slate-900">Patient</span>
-                                                <span className="block text-[11px] text-slate-500">Access Records</span>
-                                            </div>
+                                            <span className="block font-bold text-sm text-[#212842]">Patient</span>
+                                            <span className="block text-[11px] text-[#212842]/70 mt-0.5">Personal Medical Portal</span>
                                         </button>
 
                                         {/* Doctor Card */}
                                         <button
                                             type="button"
                                             onClick={() => setFormData((prev) => ({ ...prev, role: "DOCTOR" }))}
-                                            className={`p-3.5 rounded-2xl border text-left transition-all duration-200 flex items-center space-x-3 cursor-pointer ${
+                                            className={`p-3.5 rounded-md border text-left transition-all cursor-pointer ${
                                                 formData.role === "DOCTOR"
-                                                    ? "border-teal-500 bg-teal-50/60 ring-2 ring-teal-200"
-                                                    : "border-slate-200 hover:border-slate-300 bg-slate-50/50"
+                                                    ? "border-[#212842] border-2 bg-[#F0E7D5] text-[#212842]"
+                                                    : "border-[#212842]/20 bg-[#FAF6EE] text-[#212842]/70 hover:border-[#212842]/40"
                                             }`}
                                         >
-                                            <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${
-                                                formData.role === "DOCTOR" ? "bg-teal-600 text-white" : "bg-slate-200 text-slate-600"
-                                            }`}>
-                                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                                                </svg>
-                                            </div>
-                                            <div>
-                                                <span className="block font-bold text-sm text-slate-900">Doctor</span>
-                                                <span className="block text-[11px] text-slate-500">Clinical Portal</span>
-                                            </div>
+                                            <span className="block font-bold text-sm text-[#212842]">Doctor</span>
+                                            <span className="block text-[11px] text-[#212842]/70 mt-0.5">Clinical Care Portal</span>
                                         </button>
                                     </div>
                                 </div>
 
                                 {/* Full Name */}
                                 <div>
-                                    <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                                    <label className="block text-xs font-bold text-[#212842] uppercase tracking-wider mb-1">
                                         Full Name
                                     </label>
                                     <input
@@ -299,16 +271,16 @@ const Register = () => {
                                         value={formData.name}
                                         onChange={handleChange}
                                         placeholder="Dr. Sarah Jenkins"
-                                        className={`w-full px-4 py-2.5 bg-slate-50 border ${
-                                            errors.name ? "border-rose-500 focus:ring-rose-200" : "border-slate-200 focus:border-sky-500 focus:ring-sky-100"
-                                        } rounded-xl text-slate-900 text-sm focus:outline-none focus:ring-4 transition duration-200`}
+                                        className={`w-full px-4 py-2.5 bg-[#F0E7D5] border ${
+                                            errors.name ? "border-[#212842] font-semibold" : "border-[#212842]/30 focus:border-[#212842]"
+                                        } rounded-md text-[#212842] text-sm focus:outline-none focus:ring-1 focus:ring-[#212842] transition`}
                                     />
-                                    {errors.name && <p className="mt-1 text-xs text-rose-500">{errors.name}</p>}
+                                    {errors.name && <p className="mt-1 text-xs text-[#212842] font-medium">{errors.name}</p>}
                                 </div>
 
                                 {/* Email Address */}
                                 <div>
-                                    <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                                    <label className="block text-xs font-bold text-[#212842] uppercase tracking-wider mb-1">
                                         Email Address
                                     </label>
                                     <input
@@ -317,16 +289,16 @@ const Register = () => {
                                         value={formData.email}
                                         onChange={handleChange}
                                         placeholder="sarah@example.com"
-                                        className={`w-full px-4 py-2.5 bg-slate-50 border ${
-                                            errors.email ? "border-rose-500 focus:ring-rose-200" : "border-slate-200 focus:border-sky-500 focus:ring-sky-100"
-                                        } rounded-xl text-slate-900 text-sm focus:outline-none focus:ring-4 transition duration-200`}
+                                        className={`w-full px-4 py-2.5 bg-[#F0E7D5] border ${
+                                            errors.email ? "border-[#212842] font-semibold" : "border-[#212842]/30 focus:border-[#212842]"
+                                        } rounded-md text-[#212842] text-sm focus:outline-none focus:ring-1 focus:ring-[#212842] transition`}
                                     />
-                                    {errors.email && <p className="mt-1 text-xs text-rose-500">{errors.email}</p>}
+                                    {errors.email && <p className="mt-1 text-xs text-[#212842] font-medium">{errors.email}</p>}
                                 </div>
 
                                 {/* Phone Number */}
                                 <div>
-                                    <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                                    <label className="block text-xs font-bold text-[#212842] uppercase tracking-wider mb-1">
                                         Phone Number
                                     </label>
                                     <input
@@ -335,16 +307,16 @@ const Register = () => {
                                         value={formData.phone}
                                         onChange={handleChange}
                                         placeholder="+1 555 019 2834"
-                                        className={`w-full px-4 py-2.5 bg-slate-50 border ${
-                                            errors.phone ? "border-rose-500 focus:ring-rose-200" : "border-slate-200 focus:border-sky-500 focus:ring-sky-100"
-                                        } rounded-xl text-slate-900 text-sm focus:outline-none focus:ring-4 transition duration-200`}
+                                        className={`w-full px-4 py-2.5 bg-[#F0E7D5] border ${
+                                            errors.phone ? "border-[#212842] font-semibold" : "border-[#212842]/30 focus:border-[#212842]"
+                                        } rounded-md text-[#212842] text-sm focus:outline-none focus:ring-1 focus:ring-[#212842] transition`}
                                     />
-                                    {errors.phone && <p className="mt-1 text-xs text-rose-500">{errors.phone}</p>}
+                                    {errors.phone && <p className="mt-1 text-xs text-[#212842] font-medium">{errors.phone}</p>}
                                 </div>
 
                                 {/* Password */}
                                 <div>
-                                    <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                                    <label className="block text-xs font-bold text-[#212842] uppercase tracking-wider mb-1">
                                         Password
                                     </label>
                                     <div className="relative">
@@ -354,52 +326,31 @@ const Register = () => {
                                             value={formData.password}
                                             onChange={handleChange}
                                             placeholder="••••••••"
-                                            className={`w-full pl-4 pr-11 py-2.5 bg-slate-50 border ${
-                                                errors.password ? "border-rose-500 focus:ring-rose-200" : "border-slate-200 focus:border-sky-500 focus:ring-sky-100"
-                                            } rounded-xl text-slate-900 text-sm focus:outline-none focus:ring-4 transition duration-200`}
+                                            className={`w-full pl-4 pr-10 py-2.5 bg-[#F0E7D5] border ${
+                                                errors.password ? "border-[#212842] font-semibold" : "border-[#212842]/30 focus:border-[#212842]"
+                                            } rounded-md text-[#212842] text-sm focus:outline-none focus:ring-1 focus:ring-[#212842] transition`}
                                         />
                                         <button
                                             type="button"
                                             onClick={() => setShowPassword(!showPassword)}
-                                            className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none"
+                                            className="absolute inset-y-0 right-0 pr-3 flex items-center text-[#212842]/60 hover:text-[#212842] text-xs font-medium uppercase"
                                         >
-                                            {showPassword ? (
-                                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858-5.908a10.046 10.046 0 013.682-.763c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m-1.745 1.745A10.004 10.004 0 0112 19c-1.38 0-2.693-.28-3.875-.785m-5.858-5.908a9.97 9.97 0 01-1.563-3.029" />
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M3 3l18 18" />
-                                                </svg>
-                                            ) : (
-                                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                                </svg>
-                                            )}
+                                            {showPassword ? "Hide" : "Show"}
                                         </button>
                                     </div>
-                                    {errors.password && <p className="mt-1 text-xs text-rose-500">{errors.password}</p>}
+                                    {errors.password && <p className="mt-1 text-xs text-[#212842] font-medium">{errors.password}</p>}
                                 </div>
 
-                                {/* Submit Register Button */}
+                                {/* Submit Button */}
                                 <button
                                     type="submit"
                                     disabled={isLoading}
-                                    className="w-full mt-2 py-3 px-6 bg-gradient-to-r from-sky-600 to-teal-600 hover:from-sky-700 hover:to-teal-700 text-white font-semibold rounded-xl shadow-lg shadow-sky-600/25 hover:shadow-sky-600/35 focus:outline-none focus:ring-4 focus:ring-sky-200 transition duration-200 flex items-center justify-center space-x-2 disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer"
+                                    className="w-full mt-2 py-3 px-6 bg-[#212842] hover:bg-[#181E32] text-[#F0E7D5] font-semibold rounded-md shadow-sm focus:outline-none transition duration-150 flex items-center justify-center space-x-2 disabled:opacity-60 cursor-pointer"
                                 >
                                     {isLoading ? (
-                                        <>
-                                            <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
-                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                            </svg>
-                                            <span>Sending OTP...</span>
-                                        </>
+                                        <span>Dispatching OTP...</span>
                                     ) : (
-                                        <>
-                                            <span>Register & Get OTP</span>
-                                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                                            </svg>
-                                        </>
+                                        <span>Register & Request OTP</span>
                                     )}
                                 </button>
                             </form>
@@ -409,7 +360,7 @@ const Register = () => {
                         {step === 2 && (
                             <form onSubmit={handleVerifyOtpSubmit} className="space-y-5" noValidate>
                                 <div>
-                                    <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
+                                    <label className="block text-xs font-bold text-[#212842] uppercase tracking-wider mb-2">
                                         Enter 6-Digit OTP Code
                                     </label>
                                     <input
@@ -421,44 +372,38 @@ const Register = () => {
                                             if (errors.otp) setErrors({});
                                         }}
                                         placeholder="123456"
-                                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-center text-2xl font-bold tracking-widest text-slate-900 focus:outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-100 transition duration-200"
+                                        className="w-full px-4 py-3 bg-[#F0E7D5] border border-[#212842] rounded-md text-center text-2xl font-bold tracking-widest text-[#212842] focus:outline-none focus:ring-1 focus:ring-[#212842] transition"
                                     />
-                                    {errors.otp && <p className="mt-1.5 text-xs text-rose-500">{errors.otp}</p>}
+                                    {errors.otp && <p className="mt-1 text-xs text-[#212842] font-medium">{errors.otp}</p>}
                                 </div>
 
                                 {/* Submit OTP Button */}
                                 <button
                                     type="submit"
                                     disabled={isLoading}
-                                    className="w-full py-3.5 px-6 bg-gradient-to-r from-teal-600 to-sky-600 hover:from-teal-700 hover:to-sky-700 text-white font-semibold rounded-xl shadow-lg shadow-teal-600/25 focus:outline-none focus:ring-4 focus:ring-teal-200 transition duration-200 flex items-center justify-center space-x-2 disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer"
+                                    className="w-full py-3 px-6 bg-[#212842] hover:bg-[#181E32] text-[#F0E7D5] font-semibold rounded-md shadow-sm focus:outline-none transition duration-150 flex items-center justify-center space-x-2 disabled:opacity-60 cursor-pointer"
                                 >
                                     {isLoading ? (
-                                        <>
-                                            <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
-                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                            </svg>
-                                            <span>Verifying Code...</span>
-                                        </>
+                                        <span>Verifying Code...</span>
                                     ) : (
                                         <span>Verify & Complete Registration</span>
                                     )}
                                 </button>
 
-                                {/* Resend OTP & Back Action */}
-                                <div className="flex items-center justify-between text-xs pt-2">
+                                {/* Resend OTP & Back Link */}
+                                <div className="flex items-center justify-between text-xs pt-2 border-t border-[#212842]/15">
                                     <button
                                         type="button"
                                         onClick={() => setStep(1)}
-                                        className="text-slate-500 hover:text-slate-700 font-medium underline"
+                                        className="text-[#212842] hover:underline font-medium"
                                     >
-                                        ← Back to Details
+                                        ← Back to Registration Details
                                     </button>
                                     <button
                                         type="button"
                                         disabled={isResendingOtp}
                                         onClick={handleResendOtp}
-                                        className="text-sky-600 hover:text-sky-700 font-semibold underline disabled:opacity-50"
+                                        className="text-[#212842] font-bold underline disabled:opacity-50"
                                     >
                                         {isResendingOtp ? "Sending..." : "Resend OTP Code"}
                                     </button>
@@ -467,10 +412,10 @@ const Register = () => {
                         )}
 
                         {/* Footer Login Link */}
-                        <div className="mt-6 pt-5 border-t border-slate-100 text-center">
-                            <p className="text-sm text-slate-600">
+                        <div className="mt-6 pt-5 border-t border-[#212842]/15 text-center">
+                            <p className="text-xs text-[#212842]/70">
                                 Already have an account?{" "}
-                                <Link to="/login" className="font-semibold text-sky-600 hover:text-sky-700 underline underline-offset-4">
+                                <Link to="/login" className="font-bold text-[#212842] underline underline-offset-4">
                                     Sign In here
                                 </Link>
                             </p>

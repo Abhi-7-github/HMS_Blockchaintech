@@ -18,7 +18,6 @@ const Login = () => {
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData((prev) => ({ ...prev, [name]: value }));
-        // Clear field error on typing
         if (errors[name]) {
             setErrors((prev) => ({ ...prev, [name]: "" }));
         }
@@ -58,7 +57,6 @@ const Login = () => {
                 password: formData.password,
             });
 
-            // Redirect based on user role
             const role = response.user?.role?.toUpperCase();
             let targetPath = "/dashboard";
 
@@ -88,190 +86,151 @@ const Login = () => {
     };
 
     return (
-        <div className="min-h-screen bg-healthcare-gradient flex items-center justify-center p-4 md:p-8">
-            <div className="w-full max-w-5xl bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-100 grid grid-cols-1 lg:grid-cols-12 min-h-[620px]">
+        <div className="min-h-screen bg-[#F0E7D5] text-[#212842] flex items-center justify-center p-4 md:p-8">
+            <div className="w-full max-w-5xl bg-[#FAF6EE] rounded-lg shadow-xl overflow-hidden border border-[#212842]/15 grid grid-cols-1 lg:grid-cols-12 min-h-[600px]">
                 
-                {/* Left Side: Healthcare Branding Panel */}
-                <div className="lg:col-span-5 bg-gradient-to-br from-slate-900 via-teal-950 to-sky-950 text-white p-8 md:p-12 flex flex-col justify-between relative overflow-hidden">
-                    {/* Background Medical Decorative Accent */}
-                    <div className="absolute -right-16 -bottom-16 w-64 h-64 bg-teal-500/10 rounded-full blur-3xl pointer-events-none"></div>
-                    <div className="absolute -left-16 -top-16 w-64 h-64 bg-sky-500/10 rounded-full blur-3xl pointer-events-none"></div>
-
+                {/* Left Side: Healthcare Branding Panel (Midnight Indigo) */}
+                <div className="lg:col-span-5 bg-[#212842] text-[#F0E7D5] p-8 md:p-12 flex flex-col justify-between relative">
                     <div>
-                        {/* Healthcare Logo */}
-                        <div className="flex items-center space-x-3 mb-8">
-                            <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-teal-500 to-sky-400 flex items-center justify-center shadow-lg shadow-teal-500/30">
-                                <svg className="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4" />
-                                </svg>
-                            </div>
+                        {/* Healthcare Brand Header */}
+                        <div className="flex items-center space-x-4 mb-8 pb-6 border-b border-[#F0E7D5]/15">
+                            <img
+                                src="/logo.jpg"
+                                alt="AmedicK Official Logo"
+                                className="w-14 h-14 object-cover border border-[#F0E7D5]/40 rounded-sm bg-[#FAF6EE]"
+                            />
                             <div>
-                                <span className="text-2xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-100 to-sky-200 bg-clip-text text-transparent">
+                                <span className="text-xl font-bold tracking-tight text-[#F0E7D5] block uppercase">
                                     AmedicK
                                 </span>
-                                <span className="block text-xs text-teal-400 font-medium tracking-wide uppercase">
-                                    Healthcare System
+                                <span className="text-[9px] text-[#F0E7D5]/80 tracking-wider uppercase block">
+                                    CARE ROOTED IN COMPASSION
+                                </span>
+                                <span className="text-[10px] text-[#F0E7D5]/60 font-serif tracking-wide block mt-0.5">
+                                    || सर्वे सन्तु निरामया: ||
                                 </span>
                             </div>
                         </div>
 
-                        <h1 className="text-3xl font-bold leading-tight mb-4 text-white">
-                            Welcome Back to Next-Gen Care Management
+                        <h1 className="text-2xl md:text-3xl font-serif font-bold leading-snug mb-3 text-[#F0E7D5]">
+                            Care Management System
                         </h1>
-                        <p className="text-slate-300 text-sm leading-relaxed mb-8">
-                            Log in securely to access health records, verify digital prescriptions, manage appointments, and connect with verified medical providers.
+                        <p className="text-[#F0E7D5]/80 text-sm leading-relaxed mb-6">
+                            A minimal, secure platform for patient records, clinical workflows, prescription management, and hospital operations.
                         </p>
                     </div>
 
-                    {/* Healthcare Trust Metrics / Features */}
-                    <div className="space-y-3 pt-6 border-t border-slate-800/80">
-                        <div className="flex items-center space-x-3 text-xs text-slate-300">
-                            <div className="w-6 h-6 rounded-full bg-teal-500/20 text-teal-400 flex items-center justify-center font-bold">✓</div>
-                            <span>End-to-End Encrypted Health Data</span>
+                    {/* Healthcare Trust Directives */}
+                    <div className="space-y-3 pt-6 border-t border-[#F0E7D5]/15 text-xs text-[#F0E7D5]/80">
+                        <div className="flex items-center space-x-2">
+                            <span className="font-semibold text-[#F0E7D5]">—</span>
+                            <span>End-to-End Encrypted Health Records</span>
                         </div>
-                        <div className="flex items-center space-x-3 text-xs text-slate-300">
-                            <div className="w-6 h-6 rounded-full bg-teal-500/20 text-teal-400 flex items-center justify-center font-bold">✓</div>
-                            <span>Role-Based Secure Portal Access</span>
+                        <div className="flex items-center space-x-2">
+                            <span className="font-semibold text-[#F0E7D5]">—</span>
+                            <span>Role-Based Authenticated Access</span>
                         </div>
-                        <div className="flex items-center space-x-3 text-xs text-slate-300">
-                            <div className="w-6 h-6 rounded-full bg-teal-500/20 text-teal-400 flex items-center justify-center font-bold">✓</div>
-                            <span>Blockchain-Backed Records Integrity</span>
+                        <div className="flex items-center space-x-2">
+                            <span className="font-semibold text-[#F0E7D5]">—</span>
+                            <span>Blockchain-Backed Audit Verification</span>
                         </div>
                     </div>
                 </div>
 
-                {/* Right Side: Login Form */}
-                <div className="lg:col-span-7 p-8 md:p-12 flex flex-col justify-center bg-white">
+                {/* Right Side: Login Form (Vanilla Cream) */}
+                <div className="lg:col-span-7 p-8 md:p-12 flex flex-col justify-center bg-[#FAF6EE]">
                     <div className="max-w-md w-full mx-auto">
                         <div className="mb-8">
-                            <h2 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">
+                            <h2 className="text-2xl font-bold text-[#212842] tracking-tight">
                                 Account Sign In
                             </h2>
-                            <p className="text-slate-500 text-sm mt-1">
-                                Enter your credentials to access your healthcare portal.
+                            <p className="text-[#212842]/70 text-sm mt-1">
+                                Enter your credentials to access the portal.
                             </p>
                         </div>
 
                         {/* Backend Error Alert */}
                         {backendError && (
-                            <div className="mb-6 p-4 rounded-2xl bg-rose-50 border border-rose-200/80 flex items-start space-x-3 text-rose-700 text-sm animate-fade-in">
-                                <svg className="w-5 h-5 text-rose-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                <div className="flex-1">
-                                    <span className="font-semibold block mb-0.5">Authentication Error</span>
-                                    <span>{backendError}</span>
-                                </div>
+                            <div className="mb-6 p-4 rounded-md bg-[#F0E7D5] border border-[#212842] text-[#212842] text-sm">
+                                <span className="font-bold block mb-0.5">Authentication Error</span>
+                                <span>{backendError}</span>
                             </div>
                         )}
 
                         <form onSubmit={handleSubmit} className="space-y-5" noValidate>
                             {/* Email Input */}
                             <div>
-                                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
+                                <label className="block text-xs font-bold text-[#212842] uppercase tracking-wider mb-2">
                                     Email Address
                                 </label>
-                                <div className="relative">
-                                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                        </svg>
-                                    </div>
-                                    <input
-                                        type="email"
-                                        name="email"
-                                        value={formData.email}
-                                        onChange={handleChange}
-                                        placeholder="doctor@amedick.com"
-                                        className={`w-full pl-11 pr-4 py-3 bg-slate-50 border ${
-                                            errors.email ? "border-rose-500 focus:ring-rose-200" : "border-slate-200 focus:border-sky-500 focus:ring-sky-100"
-                                        } rounded-xl text-slate-900 text-sm focus:outline-none focus:ring-4 transition duration-200`}
-                                    />
-                                </div>
+                                <input
+                                    type="email"
+                                    name="email"
+                                    value={formData.email}
+                                    onChange={handleChange}
+                                    placeholder="user@amedick.com"
+                                    className={`w-full px-4 py-3 bg-[#F0E7D5] border ${
+                                        errors.email ? "border-[#212842] font-semibold" : "border-[#212842]/30 focus:border-[#212842]"
+                                    } rounded-md text-[#212842] text-sm focus:outline-none focus:ring-1 focus:ring-[#212842] transition`}
+                                />
                                 {errors.email && (
-                                    <p className="mt-1.5 text-xs text-rose-500 font-medium flex items-center space-x-1">
-                                        <span>•</span> <span>{errors.email}</span>
+                                    <p className="mt-1 text-xs text-[#212842] font-medium">
+                                        {errors.email}
                                     </p>
                                 )}
                             </div>
 
                             {/* Password Input */}
                             <div>
-                                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
+                                <label className="block text-xs font-bold text-[#212842] uppercase tracking-wider mb-2">
                                     Password
                                 </label>
                                 <div className="relative">
-                                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                                        </svg>
-                                    </div>
                                     <input
                                         type={showPassword ? "text" : "password"}
                                         name="password"
                                         value={formData.password}
                                         onChange={handleChange}
                                         placeholder="••••••••"
-                                        className={`w-full pl-11 pr-11 py-3 bg-slate-50 border ${
-                                            errors.password ? "border-rose-500 focus:ring-rose-200" : "border-slate-200 focus:border-sky-500 focus:ring-sky-100"
-                                        } rounded-xl text-slate-900 text-sm focus:outline-none focus:ring-4 transition duration-200`}
+                                        className={`w-full pl-4 pr-10 py-3 bg-[#F0E7D5] border ${
+                                            errors.password ? "border-[#212842] font-semibold" : "border-[#212842]/30 focus:border-[#212842]"
+                                        } rounded-md text-[#212842] text-sm focus:outline-none focus:ring-1 focus:ring-[#212842] transition`}
                                     />
                                     <button
                                         type="button"
                                         onClick={() => setShowPassword(!showPassword)}
-                                        className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none"
+                                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-[#212842]/60 hover:text-[#212842] focus:outline-none text-xs font-medium uppercase"
                                     >
-                                        {showPassword ? (
-                                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858-5.908a10.046 10.046 0 013.682-.763c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m-1.745 1.745A10.004 10.004 0 0112 19c-1.38 0-2.693-.28-3.875-.785m-5.858-5.908a9.97 9.97 0 01-1.563-3.029" />
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M3 3l18 18" />
-                                            </svg>
-                                        ) : (
-                                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                            </svg>
-                                        )}
+                                        {showPassword ? "Hide" : "Show"}
                                     </button>
                                 </div>
                                 {errors.password && (
-                                    <p className="mt-1.5 text-xs text-rose-500 font-medium flex items-center space-x-1">
-                                        <span>•</span> <span>{errors.password}</span>
+                                    <p className="mt-1 text-xs text-[#212842] font-medium">
+                                        {errors.password}
                                     </p>
                                 )}
                             </div>
 
-                            {/* Submit Button */}
+                            {/* Primary Button */}
                             <button
                                 type="submit"
                                 disabled={isLoading}
-                                className="w-full py-3.5 px-6 bg-gradient-to-r from-sky-600 to-teal-600 hover:from-sky-700 hover:to-teal-700 text-white font-semibold rounded-xl shadow-lg shadow-sky-600/25 hover:shadow-sky-600/35 focus:outline-none focus:ring-4 focus:ring-sky-200 transition duration-200 flex items-center justify-center space-x-2 disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer"
+                                className="w-full py-3 px-6 bg-[#212842] hover:bg-[#181E32] text-[#F0E7D5] font-semibold rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#212842] transition duration-150 flex items-center justify-center space-x-2 disabled:opacity-60 cursor-pointer"
                             >
                                 {isLoading ? (
-                                    <>
-                                        <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
-                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                        </svg>
-                                        <span>Authenticating...</span>
-                                    </>
+                                    <span>Authenticating...</span>
                                 ) : (
-                                    <>
-                                        <span>Sign In to Account</span>
-                                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                                        </svg>
-                                    </>
+                                    <span>Sign In to Account</span>
                                 )}
                             </button>
                         </form>
 
                         {/* Footer Register Link */}
-                        <div className="mt-8 pt-6 border-t border-slate-100 text-center">
-                            <p className="text-sm text-slate-600">
-                                Don't have an account yet?{" "}
-                                <Link to="/register" className="font-semibold text-sky-600 hover:text-sky-700 underline underline-offset-4">
-                                    Register as Patient / Doctor
+                        <div className="mt-8 pt-6 border-t border-[#212842]/15 text-center">
+                            <p className="text-xs text-[#212842]/70">
+                                Need an account?{" "}
+                                <Link to="/register" className="font-bold text-[#212842] underline underline-offset-4">
+                                    Register as Patient or Doctor
                                 </Link>
                             </p>
                         </div>
