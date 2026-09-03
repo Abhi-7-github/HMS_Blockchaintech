@@ -19,6 +19,7 @@ app.use(express.json());
 app.use("/api/auth", authRoutes);
 app.use("/api/patient", patientRoutes);
 app.use("/api/doctor", doctorRoutes);
+app.use("/api/doctors", doctorRoutes); // Supports plural endpoint /api/doctors/certificates
 app.use("/api/admin", adminRoutes);
 
 const PORT = envConfig.PORT;

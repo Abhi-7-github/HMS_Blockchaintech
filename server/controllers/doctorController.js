@@ -1,4 +1,5 @@
 const Doctor = require("../models/Doctor");
+const DoctorCertificate = require("../models/DoctorCertificate");
 const User = require("../models/User");
 
 /**
@@ -224,9 +225,56 @@ const getVerifiedDoctors = async (req, res) => {
     }
 };
 
+/**
+ * @desc    Get doctor verification status and submitted certificates
+ * @route   GET /api/doctors/verification-status or /api/doctor/verification-status
+ * @access  Private (Doctor only)
+ */
+const getVerificationStatus = async (req, res) => {
+    try {
+        const userId = req.user._id;
+
+        const doctor = await Doctor.findOne({ userId });
+        if (!doctor) {
+            return res.status(404).json({
+                success: false,
+                message: "Doctor profile not found. Please create your profile first.",
+            });
+        }
+
+        const certificates = await DoctorCertificate.find({ doctorId: doctor._id })
+            .select("_id certificateType originalFileName secureUrl resourceType verificationStatus uploadedAt")
+            .sort({ createdAt: -1 });
+
+        return res.status(200).json({
+            success: true,
+            status: doctor.verificationStatus,
+            certificates: certificates.map((c) => ({
+                id: c._id,
+                certificateType: c.certificateType,
+                originalFileName: c.originalFileName,
+                secureUrl: c.secureUrl,
+                resourceType: c.resourceType,
+                verificationStatus: c.verificationStatus,
+                uploadedAt: c.uploadedAt,
+            })),
+            verifiedAt: doctor.verifiedAt || null,
+            rejectionReason: doctor.rejectionReason || null,
+        });
+    } catch (error) {
+        console.error("Error fetching doctor verification status:", error.message);
+        return res.status(500).json({
+            success: false,
+            message: "Server error while fetching doctor verification status",
+            error: error.message,
+        });
+    }
+};
+
 module.exports = {
     createProfile,
     getProfile,
     updateProfile,
     getVerifiedDoctors,
+    getVerificationStatus,
 };
