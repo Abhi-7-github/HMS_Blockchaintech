@@ -1,8 +1,10 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
+const envConfig = require("./config/env");
 const connectDB = require("./config/db");
 const authRoutes = require("./routes/authRoutes");
+const patientRoutes = require("./routes/patientRoutes");
 
 const app = express();
 
@@ -11,10 +13,11 @@ app.use(cors());
 
 app.use(express.json());
 
-// Auth routes
+// Routes
 app.use("/api/auth", authRoutes);
+app.use("/api/patient", patientRoutes);
 
-const PORT = process.env.PORT;
+const PORT = envConfig.PORT;
 
 // Connect to MongoDB before starting the HTTP server
 const startServer = async () => {

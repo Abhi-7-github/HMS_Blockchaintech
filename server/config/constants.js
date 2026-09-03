@@ -1,0 +1,28 @@
+/**
+ * Central Server Constants
+ */
+const ROLES = Object.freeze({
+    PATIENT: "PATIENT",
+    DOCTOR: "DOCTOR",
+    ADMIN: "ADMIN",
+    PHARMACY: "PHARMACY",
+});
+
+const DEFAULT_ALLOWED_REGISTER_ROLES = [ROLES.PATIENT, ROLES.DOCTOR];
+
+const SECURITY_DEFAULTS = Object.freeze({
+    BCRYPT_SALT_ROUNDS: 10,
+    PASSWORD_MIN_LENGTH: 6,
+    OTP_EXPIRE_MINUTES: 10,
+    OTP_EXPIRE_SECONDS: 600,
+    OTP_MIN_RANGE: 100000,
+    OTP_MAX_RANGE: 999999,
+    JWT_EXPIRES_IN: "7d",
+    PORT: 5000,
+});
+
+module.exports = {
+    ROLES,
+    DEFAULT_ALLOWED_REGISTER_ROLES,
+    SECURITY_DEFAULTS,
+};
