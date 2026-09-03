@@ -1,6 +1,7 @@
 const Doctor = require("../models/Doctor");
 const DoctorCertificate = require("../models/DoctorCertificate");
 const User = require("../models/User");
+const { sendDoctorPendingEmail } = require("../utils/sendEmail");
 
 /**
  * @desc    Create a new doctor profile (Starts as PENDING)
@@ -76,6 +77,13 @@ const createProfile = async (req, res) => {
             "userId",
             "name email phone role isVerified"
         );
+
+        // Send Doctor Pending Verification Email
+        if (req.user?.email && req.user?.name) {
+            sendDoctorPendingEmail(req.user.email, req.user.name).catch((err) =>
+                console.error("Failed to send pending email notice:", err.message)
+            );
+        }
 
         return res.status(201).json({
             success: true,

@@ -50,7 +50,7 @@ api.interceptors.response.use(
     }
 );
 
-// 5. Reusable API Functions
+// 5. Authentication API Functions
 
 /**
  * Register a new user account (PATIENT / DOCTOR)
@@ -100,6 +100,82 @@ export const getCurrentUser = async () => {
  */
 export const logout = () => {
     removeToken();
+};
+
+// 6. Doctor Profile & Certificate Services
+
+/**
+ * Create Doctor Profile
+ * @param {Object} profileData
+ */
+export const createDoctorProfile = async (profileData) => {
+    return await api.post("/doctor/profile", profileData);
+};
+
+/**
+ * Upload Doctor Verification Certificate
+ * @param {FormData} formData
+ */
+export const uploadDoctorCertificate = async (formData) => {
+    return await api.post("/doctors/certificates", formData, {
+        headers: {
+            "Content-Type": "multipart/form-data",
+        },
+    });
+};
+
+// 7. Admin Doctor Verification API Functions
+
+/**
+ * Fetch list of pending doctors requiring admin verification
+ * @param {number} page
+ * @param {number} limit
+ */
+export const getAdminPendingDoctors = async (page = 1, limit = 10) => {
+    return await api.get(`/admin/doctors/pending?page=${page}&limit=${limit}`);
+};
+
+/**
+ * Fetch list of all doctors with optional verification status filter (ALL, PENDING, VERIFIED, REJECTED)
+ * @param {string} status
+ */
+export const getAdminDoctors = async (status = "") => {
+    const url = status ? `/admin/doctors?status=${encodeURIComponent(status)}` : "/admin/doctors";
+    return await api.get(url);
+};
+
+/**
+ * Fetch detailed doctor profile and submitted certificates by Doctor ID
+ * @param {string} id - Doctor ObjectId
+ */
+export const getAdminDoctorById = async (id) => {
+    return await api.get(`/admin/doctors/${id}`);
+};
+
+/**
+ * Fetch secure temporary access URL for a specific doctor certificate
+ * @param {string} doctorId - Doctor ObjectId
+ * @param {string} certificateId - DoctorCertificate ObjectId
+ */
+export const getAdminDoctorCertificate = async (doctorId, certificateId) => {
+    return await api.get(`/admin/doctors/${doctorId}/certificates/${certificateId}`);
+};
+
+/**
+ * Approve doctor verification request
+ * @param {string} id - Doctor ObjectId
+ */
+export const approveAdminDoctor = async (id) => {
+    return await api.patch(`/admin/doctors/${id}/verify`);
+};
+
+/**
+ * Reject doctor verification request with a mandatory rejection reason
+ * @param {string} id - Doctor ObjectId
+ * @param {string} rejectionReason
+ */
+export const rejectAdminDoctor = async (id, rejectionReason) => {
+    return await api.patch(`/admin/doctors/${id}/reject`, { rejectionReason });
 };
 
 export default api;
