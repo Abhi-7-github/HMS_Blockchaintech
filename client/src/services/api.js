@@ -178,4 +178,75 @@ export const rejectAdminDoctor = async (id, rejectionReason) => {
     return await api.patch(`/admin/doctors/${id}/reject`, { rejectionReason });
 };
 
+// 8. Appointment API Functions
+
+/**
+ * Fetch all verified doctors for patient appointment booking
+ */
+export const getVerifiedDoctors = async () => {
+    return await api.get("/doctor/verified");
+};
+
+/**
+ * Book a new appointment (Patient only)
+ * @param {Object} appointmentData - { doctorId, appointmentDate, startTime, endTime, consultationMode, reason }
+ */
+export const createAppointment = async (appointmentData) => {
+    return await api.post("/appointments", appointmentData);
+};
+
+/**
+ * Fetch appointments for authenticated patient
+ */
+export const getPatientAppointments = async () => {
+    return await api.get("/appointments/patient");
+};
+
+/**
+ * Fetch appointments for authenticated doctor
+ */
+export const getDoctorAppointments = async () => {
+    return await api.get("/appointments/doctor");
+};
+
+/**
+ * Fetch detailed single appointment info by ID
+ * @param {string} id - Appointment ObjectId
+ */
+export const getAppointmentById = async (id) => {
+    return await api.get(`/appointments/${id}`);
+};
+
+/**
+ * Confirm appointment request (Doctor only)
+ * @param {string} id - Appointment ObjectId
+ */
+export const confirmAppointment = async (id) => {
+    return await api.patch(`/appointments/${id}/confirm`);
+};
+
+/**
+ * Reject appointment request (Doctor only)
+ * @param {string} id - Appointment ObjectId
+ */
+export const rejectAppointment = async (id) => {
+    return await api.patch(`/appointments/${id}/reject`);
+};
+
+/**
+ * Cancel appointment (Patient or Doctor)
+ * @param {string} id - Appointment ObjectId
+ */
+export const cancelAppointment = async (id) => {
+    return await api.patch(`/appointments/${id}/cancel`);
+};
+
+/**
+ * Mark appointment as completed (Doctor only)
+ * @param {string} id - Appointment ObjectId
+ */
+export const completeAppointment = async (id) => {
+    return await api.patch(`/appointments/${id}/complete`);
+};
+
 export default api;
