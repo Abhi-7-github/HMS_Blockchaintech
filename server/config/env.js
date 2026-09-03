@@ -27,6 +27,16 @@ const envConfig = Object.freeze({
     // JWT Config
     JWT_SECRET: process.env.JWT_SECRET || "",
     JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || SECURITY_DEFAULTS.JWT_EXPIRES_IN,
+
+    // Cloudinary Config (Never expose CLOUDINARY_API_SECRET to client/React)
+    CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME || "",
+    CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY || "",
+    CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET || "",
+    CLOUDINARY_FOLDER: process.env.CLOUDINARY_FOLDER || "amedick/doctor-certificates",
+    MAX_CERTIFICATE_FILE_SIZE_BYTES: parseInt(
+        process.env.MAX_CERTIFICATE_FILE_SIZE_BYTES || "5242880", // Default 5 MB
+        10
+    ),
 });
 
 module.exports = envConfig;
