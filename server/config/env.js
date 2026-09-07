@@ -37,6 +37,11 @@ const envConfig = Object.freeze({
         process.env.MAX_CERTIFICATE_FILE_SIZE_BYTES || "5242880", // Default 5 MB
         10
     ),
+
+    // Blockchain Configuration (Backend-Only - Never expose BLOCKCHAIN_PRIVATE_KEY to client)
+    BLOCKCHAIN_RPC_URL: process.env.BLOCKCHAIN_RPC_URL || "http://127.0.0.1:8545",
+    BLOCKCHAIN_PRIVATE_KEY: process.env.BLOCKCHAIN_PRIVATE_KEY || "",
+    HEALTHBRIDGE_CONTRACT_ADDRESS: process.env.HEALTHBRIDGE_CONTRACT_ADDRESS || "",
 });
 
 module.exports = envConfig;
