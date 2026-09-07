@@ -8,6 +8,7 @@ const patientRoutes = require("./routes/patientRoutes");
 const doctorRoutes = require("./routes/doctorRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const appointmentRoutes = require("./routes/appointmentRoutes");
+const prescriptionRoutes = require("./routes/prescriptionRoutes");
 
 const app = express();
 
@@ -23,6 +24,7 @@ app.use("/api/doctor", doctorRoutes);
 app.use("/api/doctors", doctorRoutes); // Supports plural endpoint /api/doctors/certificates
 app.use("/api/admin", adminRoutes);
 app.use("/api/appointments", appointmentRoutes);
+app.use("/api/prescriptions", prescriptionRoutes);
 
 const PORT = envConfig.PORT;
 

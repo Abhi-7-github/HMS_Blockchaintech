@@ -249,4 +249,36 @@ export const completeAppointment = async (id) => {
     return await api.patch(`/appointments/${id}/complete`);
 };
 
+// 9. Digital Prescription API Functions
+
+/**
+ * Create a new digital prescription (Doctor only)
+ * @param {Object} prescriptionData - { appointmentId, diagnosis, medicines, instructions, validUntil }
+ */
+export const createPrescription = async (prescriptionData) => {
+    return await api.post("/prescriptions", prescriptionData);
+};
+
+/**
+ * Fetch digital prescriptions for authenticated patient
+ */
+export const getPatientPrescriptions = async () => {
+    return await api.get("/prescriptions/patient");
+};
+
+/**
+ * Fetch digital prescriptions created by authenticated doctor
+ */
+export const getDoctorPrescriptions = async () => {
+    return await api.get("/prescriptions/doctor");
+};
+
+/**
+ * Fetch single digital prescription details by ID
+ * @param {string} id - Prescription ObjectId
+ */
+export const getPrescriptionById = async (id) => {
+    return await api.get(`/prescriptions/${id}`);
+};
+
 export default api;
