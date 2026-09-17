@@ -281,4 +281,104 @@ export const getPrescriptionById = async (id) => {
     return await api.get(`/prescriptions/${id}`);
 };
 
+// 10. AI Health Assistant Service
+/**
+ * Send health assistant query to backend AI endpoint
+ * @param {Object} queryData - { message, language }
+ */
+export const sendAiHealthAssistantQuery = async (queryData) => {
+    return await api.post("/ai/health-assistant", queryData);
+};
+
+// 11. Medication Reminder & Adherence API Functions
+/**
+ * Fetch today's medication schedule generated from active prescriptions
+ */
+export const getTodayMedicationSchedule = async () => {
+    return await api.get("/medications/schedule");
+};
+
+/**
+ * Mark scheduled medication dose as TAKEN or SKIPPED
+ * @param {Object} payload - { adherenceId, status, notes }
+ */
+export const updateMedicationStatus = async (payload) => {
+    return await api.post("/medications/status", payload);
+};
+
+/**
+ * Fetch patient medication adherence history and statistics
+ */
+export const getMedicationAdherenceHistory = async () => {
+    return await api.get("/medications/adherence");
+};
+
+// 12. Emergency Assistance API Functions
+/**
+ * Fetch authenticated patient's emergency profile settings
+ */
+export const getPatientEmergencyProfile = async () => {
+    return await api.get("/emergency/profile");
+};
+
+/**
+ * Update patient emergency profile & preferences
+ * @param {Object} data - { bloodGroup, allergies, chronicConditions, emergencyContact, importantMedicalNotes, emergencyAccessEnabled }
+ */
+export const updateEmergencyProfile = async (data) => {
+    return await api.put("/emergency/profile", data);
+};
+
+/**
+ * Explicit emergency access triage request (Logs audit event + returns emergency profile ONLY)
+ * @param {string} patientId
+ * @param {string} reason
+ */
+export const accessEmergencyInfo = async (patientId, reason = "Critical Medical Emergency Triage Access") => {
+    return await api.post(`/emergency/access/${patientId}`, { reason });
+};
+
+/**
+ * Fetch emergency access audit logs
+ */
+export const getEmergencyAccessLogs = async () => {
+    return await api.get("/emergency/logs");
+};
+
+// 13. Telemedicine Consultation Room API Functions
+/**
+ * Request entrance to telemedicine consultation room (Patient & Assigned Doctor only)
+ * @param {string} appointmentId
+ */
+export const getConsultationRoomAccess = async (appointmentId) => {
+    return await api.get(`/appointments/${appointmentId}/consultation`);
+};
+
+/**
+ * Send WebRTC signal or in-room chat message
+ * @param {string} appointmentId
+ * @param {string} type - "offer" | "answer" | "ice-candidate" | "chat"
+ * @param {Object} payload
+ */
+export const sendConsultationSignal = async (appointmentId, type, payload) => {
+    return await api.post(`/appointments/${appointmentId}/consultation/signal`, { type, payload });
+};
+
+/**
+ * Fetch active in-room WebRTC signals & chat messages
+ * @param {string} appointmentId
+ */
+export const getConsultationSignals = async (appointmentId) => {
+    return await api.post(`/appointments/${appointmentId}/consultation/signal`, { type: "get-signals" });
+};
+
+// 14. Rural Healthcare & Wellness API Functions
+/**
+ * Fetch rural healthcare knowledge base, ASHA directory & structured wellness guides
+ */
+export const getRuralWellnessData = async () => {
+    return await api.get("/rural/wellness");
+};
+
 export default api;
+

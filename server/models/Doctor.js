@@ -75,7 +75,23 @@ const doctorSchema = new mongoose.Schema(
             trim: true,
             default: "",
         },
+        verificationHash: {
+            type: String,
+            trim: true,
+            default: "",
+        },
+        blockchainRecordId: {
+            type: String,
+            trim: true,
+            default: "",
+        },
+        blockchainTransactionHash: {
+            type: String,
+            trim: true,
+            default: "",
+        },
     },
+
     {
         timestamps: true, // Automatically manages createdAt and updatedAt
     }

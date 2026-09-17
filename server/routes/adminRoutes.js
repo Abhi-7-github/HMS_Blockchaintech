@@ -9,6 +9,7 @@ const {
     approveDoctorProfile,
     rejectDoctorProfile,
     verifyDoctor,
+    verifyDoctorOnChainStatus,
 } = require("../controllers/adminDoctorController");
 
 // Protect all admin routes: Require valid JWT token & ADMIN role authorization
@@ -17,6 +18,7 @@ router.use(protect, isAdmin);
 // Admin doctor verification management endpoints
 router.get("/doctors", getAllDoctors);
 router.get("/doctors/pending", getPendingDoctors);
+router.get("/doctors/:id/verify-onchain", verifyDoctorOnChainStatus);
 router.get("/doctors/:id", getDoctorDetailsById);
 router.get("/doctors/:doctorId/certificates/:certificateId", getDoctorCertificateForAdmin);
 
@@ -24,5 +26,6 @@ router.get("/doctors/:doctorId/certificates/:certificateId", getDoctorCertificat
 router.patch("/doctors/:id/verify", approveDoctorProfile);
 router.patch("/doctors/:id/reject", rejectDoctorProfile);
 router.put("/doctors/:id/verify", verifyDoctor); // Legacy support
+
 
 module.exports = router;

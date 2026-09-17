@@ -3,7 +3,9 @@ const fs = require("fs");
 const path = require("path");
 
 // Load compiled contract artifact from Hardhat build folder
-const artifactPath = path.join(__dirname, "../artifacts/contracts/HealthBridgeRegistry.sol/HealthBridgeRegistry.json");
+const artifactPath1 = path.join(__dirname, "../artifacts/blockchain/contracts/HealthBridgeRegistry.sol/HealthBridgeRegistry.json");
+const artifactPath2 = path.join(__dirname, "../artifacts/contracts/HealthBridgeRegistry.sol/HealthBridgeRegistry.json");
+const artifactPath = fs.existsSync(artifactPath1) ? artifactPath1 : artifactPath2;
 
 async function testBlockchainServiceIndependently() {
     console.log("--------------------------------------------------");

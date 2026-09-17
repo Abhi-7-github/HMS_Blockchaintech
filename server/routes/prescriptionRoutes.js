@@ -5,6 +5,7 @@ const {
     getPatientPrescriptions,
     getDoctorPrescriptions,
     getPrescriptionById,
+    verifyPrescriptionIntegrity,
 } = require("../controllers/prescriptionController");
 
 const { protect, authorize, isPatient, isDoctor } = require("../middleware/authMiddleware");
@@ -27,9 +28,15 @@ router.get("/patient", isPatient, getPatientPrescriptions);
 // @access  Private (Doctor)
 router.get("/doctor", isDoctor, getDoctorPrescriptions);
 
+// @route   GET /api/prescriptions/:id/verify
+// @desc    Verify prescription integrity against blockchain
+// @access  Private (Patient, Doctor, Admin)
+router.get("/:id/verify", authorize("PATIENT", "DOCTOR", "ADMIN"), verifyPrescriptionIntegrity);
+
 // @route   GET /api/prescriptions/:id
 // @desc    Get single prescription by ID
 // @access  Private (Patient, Doctor, Admin)
 router.get("/:id", authorize("PATIENT", "DOCTOR", "ADMIN"), getPrescriptionById);
+
 
 module.exports = router;

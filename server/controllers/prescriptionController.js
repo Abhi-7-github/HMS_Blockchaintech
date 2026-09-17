@@ -1,7 +1,13 @@
+const mongoose = require("mongoose");
 const Prescription = require("../models/Prescription");
 const Doctor = require("../models/Doctor");
 const Patient = require("../models/Patient");
 const Appointment = require("../models/Appointment");
+const {
+    storePrescriptionHashOnChain,
+    verifyHashOnChain,
+} = require("../blockchain/blockchainService");
+
 
 /**
  * @desc    Create a new digital prescription for an appointment
@@ -86,8 +92,29 @@ const createPrescription = async (req, res) => {
             validUntil,
         });
 
-        // 6. Create Prescription instance
+        const prescriptionId = new mongoose.Types.ObjectId();
+
+        // 6. Write deterministic hash to blockchain (Zero raw medical contents on-chain)
+        let blockchainRecordId = "";
+        let blockchainTransactionHash = "";
+
+        const bcResult = await storePrescriptionHashOnChain(
+            prescriptionId.toString(),
+            prescriptionHash,
+            doctorProfile._id.toString(),
+            patientId.toString()
+        );
+
+        if (bcResult && bcResult.success) {
+            blockchainRecordId = bcResult.prescriptionId;
+            blockchainTransactionHash = bcResult.transactionHash;
+        } else {
+            console.warn("Blockchain prescription recording warning:", bcResult ? bcResult.error : "Transaction pending");
+        }
+
+        // 7. Create Prescription instance
         const prescription = new Prescription({
+            _id: prescriptionId,
             patientId,
             doctorId: doctorProfile._id,
             appointmentId: appointment._id,
@@ -96,11 +123,12 @@ const createPrescription = async (req, res) => {
             instructions: instructions ? instructions.trim() : "",
             validUntil,
             prescriptionHash,
-            blockchainRecordId: "",
-            blockchainTransactionHash: "",
+            blockchainRecordId,
+            blockchainTransactionHash,
         });
 
         await prescription.save();
+
 
         // 7. Populate details for response
         const populatedPrescription = await Prescription.findById(prescription._id)
@@ -301,9 +329,125 @@ const getPrescriptionById = async (req, res) => {
     }
 };
 
+/**
+ * @desc    Verify digital prescription integrity on-chain
+ * @route   GET /api/prescriptions/:id/verify
+ * @access  Private (Patient, Doctor, Admin)
+ */
+const verifyPrescriptionIntegrity = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({
+                status: "INVALID / MODIFIED",
+                success: false,
+                message: "Invalid prescription ID format.",
+            });
+        }
+
+        const prescription = await Prescription.findById(id);
+        if (!prescription) {
+            return res.status(404).json({
+                status: "INVALID / MODIFIED",
+                success: false,
+                message: "Prescription not found.",
+            });
+        }
+
+        // Ownership & Authorization Check
+        if (req.user.role === "PATIENT") {
+            const patientProfile = await Patient.findOne({ userId: req.user._id });
+            if (!patientProfile || !prescription.patientId.equals(patientProfile._id)) {
+                return res.status(403).json({
+                    status: "INVALID / MODIFIED",
+                    success: false,
+                    message: "Access denied. You are not authorized to verify this prescription.",
+                });
+            }
+        } else if (req.user.role === "DOCTOR") {
+            const doctorProfile = await Doctor.findOne({ userId: req.user._id });
+            if (!doctorProfile || !prescription.doctorId.equals(doctorProfile._id)) {
+                return res.status(403).json({
+                    status: "INVALID / MODIFIED",
+                    success: false,
+                    message: "Access denied. You are not authorized to verify this prescription.",
+                });
+            }
+        } else if (req.user.role !== "ADMIN") {
+            return res.status(403).json({
+                status: "INVALID / MODIFIED",
+                success: false,
+                message: "Access denied. Role not authorized.",
+            });
+        }
+
+        if (!prescription.blockchainTransactionHash || !prescription.prescriptionHash) {
+            return res.status(200).json({
+                status: "INVALID / MODIFIED",
+                success: false,
+                message: "No blockchain transaction record found for this prescription.",
+                data: {
+                    prescriptionId: prescription._id,
+                    blockchainTransactionHash: prescription.blockchainTransactionHash || "",
+                },
+            });
+        }
+
+        // Re-calculate canonical deterministic SHA-256 hash of prescription
+        const currentHash = Prescription.generatePrescriptionHash(prescription);
+
+        // Verify stored hash against blockchain smart contract
+        const onChainResult = await verifyHashOnChain("PRESCRIPTION", prescription._id.toString(), currentHash);
+
+        if (!onChainResult.success) {
+            return res.status(500).json({
+                status: "INVALID / MODIFIED",
+                success: false,
+                message: `Blockchain verification error: ${onChainResult.error}`,
+            });
+        }
+
+        if (onChainResult.isVerified) {
+            return res.status(200).json({
+                status: "VALID",
+                success: true,
+                message: "Digital prescription verified as authentic & unmodified on Ethereum blockchain.",
+                data: {
+                    prescriptionId: prescription._id,
+                    prescriptionHash: currentHash,
+                    blockchainTransactionHash: prescription.blockchainTransactionHash,
+                    onChainTimestamp: onChainResult.timestamp,
+                },
+            });
+        } else {
+            return res.status(200).json({
+                status: "INVALID / MODIFIED",
+                success: false,
+                message: "WARNING: Prescription content hash does not match on-chain record! Content has been modified.",
+                data: {
+                    prescriptionId: prescription._id,
+                    prescriptionHash: currentHash,
+                    blockchainTransactionHash: prescription.blockchainTransactionHash,
+                },
+            });
+        }
+    } catch (error) {
+        console.error("Error verifying prescription integrity:", error.message);
+        return res.status(500).json({
+            status: "INVALID / MODIFIED",
+            success: false,
+            message: "Server error while verifying prescription on-chain",
+            error: error.message,
+        });
+    }
+};
+
 module.exports = {
     createPrescription,
     getPatientPrescriptions,
     getDoctorPrescriptions,
     getPrescriptionById,
+    verifyPrescriptionIntegrity,
 };
+

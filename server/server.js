@@ -9,6 +9,11 @@ const doctorRoutes = require("./routes/doctorRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const appointmentRoutes = require("./routes/appointmentRoutes");
 const prescriptionRoutes = require("./routes/prescriptionRoutes");
+const medicalRecordRoutes = require("./routes/medicalRecordRoutes");
+const aiRoutes = require("./routes/aiRoutes");
+const medicationRoutes = require("./routes/medicationRoutes");
+const emergencyRoutes = require("./routes/emergencyRoutes");
+const ruralHealthRoutes = require("./routes/ruralHealthRoutes");
 
 const app = express();
 
@@ -20,11 +25,20 @@ app.use(express.json());
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/patient", patientRoutes);
+app.use("/api/patients", patientRoutes);
 app.use("/api/doctor", doctorRoutes);
 app.use("/api/doctors", doctorRoutes); // Supports plural endpoint /api/doctors/certificates
+
 app.use("/api/admin", adminRoutes);
 app.use("/api/appointments", appointmentRoutes);
 app.use("/api/prescriptions", prescriptionRoutes);
+app.use("/api/records", medicalRecordRoutes);
+app.use("/api/ai", aiRoutes);
+app.use("/api/medications", medicationRoutes);
+app.use("/api/emergency", emergencyRoutes);
+app.use("/api/rural", ruralHealthRoutes);
+
+
 
 const PORT = envConfig.PORT;
 

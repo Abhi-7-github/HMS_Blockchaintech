@@ -9,6 +9,8 @@ const {
     rejectAppointment,
     cancelAppointment,
     completeAppointment,
+    getConsultationRoomAccess,
+    handleConsultationSignaling,
 } = require("../controllers/appointmentController");
 
 const { protect, authorize, isPatient, isDoctor } = require("../middleware/authMiddleware");
@@ -16,7 +18,18 @@ const { protect, authorize, isPatient, isDoctor } = require("../middleware/authM
 // Require JWT authentication for all appointment endpoints
 router.use(protect);
 
+// @route   GET /api/appointments/:id/consultation
+// @desc    Enter telemedicine consultation room (Patient & Assigned Doctor only)
+// @access  Private (Patient, Doctor, Admin)
+router.get("/:id/consultation", authorize("PATIENT", "DOCTOR", "ADMIN"), getConsultationRoomAccess);
+
+// @route   POST /api/appointments/:id/consultation/signal
+// @desc    WebRTC & Chat Signaling exchange
+// @access  Private (Patient, Doctor, Admin)
+router.post("/:id/consultation/signal", authorize("PATIENT", "DOCTOR", "ADMIN"), handleConsultationSignaling);
+
 // @route   POST /api/appointments
+// @desc    Book a new appointment (Patient only)
 // @desc    Book a new appointment (Patient only)
 // @access  Private (Patient)
 router.post("/", isPatient, createAppointment);

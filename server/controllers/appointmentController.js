@@ -565,6 +565,169 @@ const completeAppointment = async (req, res) => {
     }
 };
 
+/**
+ * In-memory signal store for WebRTC offers/answers/ICE candidates & in-room chat messages
+ */
+const consultationSignals = new Map();
+
+/**
+ * @desc    Enter telemedicine consultation room
+ * @route   GET /api/appointments/:id/consultation
+ * @access  Private (Assigned Patient & Assigned Doctor only)
+ */
+const getConsultationRoomAccess = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const currentUserId = req.user._id;
+
+        const appointment = await Appointment.findById(id)
+            .populate({
+                path: "patientId",
+                populate: { path: "userId", select: "name email phone" },
+            })
+            .populate({
+                path: "doctorId",
+                select: "specialization qualification hospital consultationFee",
+                populate: { path: "userId", select: "name email phone" },
+            });
+
+        if (!appointment) {
+            return res.status(404).json({
+                success: false,
+                message: "Appointment not found.",
+            });
+        }
+
+        // Requirement: Only CONFIRMED or COMPLETED appointments can start consultation
+        if (!["CONFIRMED", "COMPLETED"].includes(appointment.status)) {
+            return res.status(403).json({
+                success: false,
+                message: `Access denied. Consultation room can only be accessed for CONFIRMED appointments. Current status: '${appointment.status}'.`,
+            });
+        }
+
+        // Requirement: Only assigned patient and assigned doctor (or Admin) can enter
+        const patientUserId = appointment.patientId?.userId?._id || appointment.patientId?.userId;
+        const doctorUserId = appointment.doctorId?.userId?._id || appointment.doctorId?.userId;
+
+        const isPatientUser = patientUserId && patientUserId.equals(currentUserId);
+        const isDoctorUser = doctorUserId && doctorUserId.equals(currentUserId);
+        const isAdminUser = req.user.role === "ADMIN";
+
+        if (!isPatientUser && !isDoctorUser && !isAdminUser) {
+            return res.status(403).json({
+                success: false,
+                message: "Access denied. Unrelated users are strictly prohibited from entering this consultation room.",
+            });
+        }
+
+        const userRoleInRoom = isDoctorUser ? "DOCTOR" : isPatientUser ? "PATIENT" : "ADMIN";
+
+        const roomSession = {
+            roomId: `consultation-${appointment._id}`,
+            appointmentId: appointment._id,
+            status: appointment.status,
+            userRole: userRoleInRoom,
+            patient: {
+                id: appointment.patientId._id,
+                userId: patientUserId,
+                name: appointment.patientId.userId?.name || "Patient",
+                email: appointment.patientId.userId?.email || "",
+            },
+            doctor: {
+                id: appointment.doctorId._id,
+                userId: doctorUserId,
+                name: appointment.doctorId.userId?.name || "Doctor",
+                specialization: appointment.doctorId.specialization,
+                hospital: appointment.doctorId.hospital,
+            },
+            appointmentDetails: {
+                date: appointment.appointmentDate,
+                startTime: appointment.startTime,
+                endTime: appointment.endTime,
+                mode: appointment.consultationMode,
+                reason: appointment.reason,
+            },
+            webrtcConfig: {
+                iceServers: [
+                    { urls: "stun:stun.l.google.com:19302" },
+                    { urls: "stun:stun1.l.google.com:19302" },
+                ],
+            },
+        };
+
+        return res.status(200).json({
+            success: true,
+            message: "Consultation room access granted.",
+            data: roomSession,
+        });
+    } catch (error) {
+        console.error("Error accessing consultation room:", error.message);
+        return res.status(500).json({
+            success: false,
+            message: "Server error while authorizing consultation room access",
+        });
+    }
+};
+
+/**
+ * @desc    WebRTC & Chat Signaling for Consultation Room
+ * @route   POST /api/appointments/:id/consultation/signal
+ * @access  Private (Assigned Patient & Doctor)
+ */
+const handleConsultationSignaling = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { type, payload } = req.body;
+        const currentUserId = req.user._id;
+
+        const appointment = await Appointment.findById(id)
+            .populate("patientId")
+            .populate("doctorId");
+
+        if (!appointment) {
+            return res.status(404).json({ success: false, message: "Appointment not found." });
+        }
+
+        const patientUserId = appointment.patientId?.userId;
+        const doctorUserId = appointment.doctorId?.userId;
+
+        if (!currentUserId.equals(patientUserId) && !currentUserId.equals(doctorUserId) && req.user.role !== "ADMIN") {
+            return res.status(403).json({ success: false, message: "Unauthorized signaling request." });
+        }
+
+        const roomId = `consultation-${id}`;
+        if (!consultationSignals.has(roomId)) {
+            consultationSignals.set(roomId, []);
+        }
+
+        const signals = consultationSignals.get(roomId);
+
+        if (type === "chat") {
+            const chatMsg = {
+                id: `msg-${Date.now()}`,
+                sender: currentUserId.equals(doctorUserId) ? "doctor" : "patient",
+                senderName: req.user.name || "User",
+                text: payload.text,
+                timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+            };
+            signals.push({ type: "chat", data: chatMsg });
+            return res.status(200).json({ success: true, message: "Chat sent.", data: chatMsg });
+        }
+
+        if (type === "get-signals") {
+            const chatMessages = signals.filter((s) => s.type === "chat").map((s) => s.data);
+            return res.status(200).json({ success: true, signals, chatMessages });
+        }
+
+        signals.push({ type, payload, from: currentUserId });
+        return res.status(200).json({ success: true, message: "Signal registered." });
+    } catch (error) {
+        console.error("Signaling error:", error.message);
+        return res.status(500).json({ success: false, message: "Signaling error" });
+    }
+};
+
 module.exports = {
     createAppointment,
     getPatientAppointments,
@@ -574,4 +737,6 @@ module.exports = {
     rejectAppointment,
     cancelAppointment,
     completeAppointment,
+    getConsultationRoomAccess,
+    handleConsultationSignaling,
 };

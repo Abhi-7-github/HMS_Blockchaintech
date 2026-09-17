@@ -42,6 +42,10 @@ const envConfig = Object.freeze({
     BLOCKCHAIN_RPC_URL: process.env.BLOCKCHAIN_RPC_URL || "http://127.0.0.1:8545",
     BLOCKCHAIN_PRIVATE_KEY: process.env.BLOCKCHAIN_PRIVATE_KEY || "",
     HEALTHBRIDGE_CONTRACT_ADDRESS: process.env.HEALTHBRIDGE_CONTRACT_ADDRESS || "",
+
+    // AI Health Assistant Config (Server-Side Only - Never expose to client/React)
+    GEMINI_API_KEY: process.env.GEMINI_API_KEY || process.env.AI_API_KEY || "",
 });
+
 
 module.exports = envConfig;
