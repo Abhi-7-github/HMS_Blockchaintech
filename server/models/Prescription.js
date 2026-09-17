@@ -103,7 +103,6 @@ const prescriptionSchema = new mongoose.Schema(
 // Compound indexes for optimal lookup performance
 prescriptionSchema.index({ patientId: 1, createdAt: -1 });
 prescriptionSchema.index({ doctorId: 1, createdAt: -1 });
-prescriptionSchema.index({ appointmentId: 1 });
 prescriptionSchema.index({ prescriptionHash: 1 });
 
 /**

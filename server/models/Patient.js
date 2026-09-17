@@ -73,6 +73,25 @@ const patientSchema = new mongoose.Schema(
             trim: true,
             default: "",
         },
+        allergies: {
+            type: String,
+            trim: true,
+            default: "None reported",
+        },
+        chronicConditions: {
+            type: String,
+            trim: true,
+            default: "None reported",
+        },
+        importantMedicalNotes: {
+            type: String,
+            trim: true,
+            default: "",
+        },
+        emergencyAccessEnabled: {
+            type: Boolean,
+            default: true,
+        },
     },
     {
         timestamps: true, // Automatically manages createdAt and updatedAt

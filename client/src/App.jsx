@@ -28,6 +28,10 @@ function App() {
                 <Route path="/admin/dashboard" element={<DashboardPlaceholder roleTitle="Admin" />} />
                 <Route path="/pharmacy/dashboard" element={<DashboardPlaceholder roleTitle="Pharmacy" />} />
                 <Route path="/dashboard" element={<DashboardPlaceholder roleTitle="Healthcare" />} />
+                <Route path="/ai-assistant" element={<DashboardPlaceholder roleTitle="Healthcare" initialTab="ai-assistant" />} />
+                <Route path="/medications" element={<DashboardPlaceholder roleTitle="Patient" initialTab="medications" />} />
+                <Route path="/emergency" element={<DashboardPlaceholder roleTitle="Patient" initialTab="emergency" />} />
+                <Route path="/rural-healthcare" element={<DashboardPlaceholder roleTitle="Healthcare" initialTab="rural" />} />
 
                 {/* Protected Admin Doctor Verification Dashboard Routes */}
                 <Route

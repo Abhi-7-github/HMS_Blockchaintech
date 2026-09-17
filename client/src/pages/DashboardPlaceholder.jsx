@@ -5,14 +5,21 @@ import PatientFindDoctors from "../components/PatientFindDoctors";
 import PatientAppointments from "../components/PatientAppointments";
 import DoctorAppointments from "../components/DoctorAppointments";
 import BookAppointmentModal from "../components/BookAppointmentModal";
+import AiHealthAssistant from "../components/AiHealthAssistant";
+import MedicationReminders from "../components/MedicationReminders";
+import EmergencyAssistance from "../components/EmergencyAssistance";
+import RuralHealthcare from "../components/RuralHealthcare";
+import LanguageSelector from "../components/LanguageSelector";
+import { useLanguage } from "../i18n/i18nContext";
 
-const DashboardPlaceholder = ({ roleTitle }) => {
+const DashboardPlaceholder = ({ roleTitle, initialTab = "overview" }) => {
     const navigate = useNavigate();
+    const { t } = useLanguage();
     const [user, setUser] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
 
     // Active Navigation Subtab
-    const [activeTab, setActiveTab] = useState("overview");
+    const [activeTab, setActiveTab] = useState(initialTab);
 
     // Interactive Modals
     const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
@@ -139,6 +146,8 @@ const DashboardPlaceholder = ({ roleTitle }) => {
 
                     {/* Right User Actions */}
                     <div className="flex items-center space-x-6">
+                        <LanguageSelector className="text-[#F0E7D5]" />
+
                         <div className="text-right hidden sm:block">
                             <span className="block text-xs font-bold text-[#F0E7D5] uppercase tracking-wider">
                                 {user?.name}
@@ -150,7 +159,7 @@ const DashboardPlaceholder = ({ roleTitle }) => {
                             onClick={handleLogout}
                             className="py-1.5 px-3.5 bg-[#F0E7D5] hover:bg-[#E2D7C2] text-[#212842] text-xs font-bold rounded-sm border border-[#212842] transition cursor-pointer"
                         >
-                            Sign Out
+                            {t("app.signOut")}
                         </button>
                     </div>
                 </div>
@@ -167,7 +176,7 @@ const DashboardPlaceholder = ({ roleTitle }) => {
                                 : "text-[#212842]/70 hover:bg-[#F0E7D5] hover:text-[#212842]"
                         }`}
                     >
-                        Overview
+                        {t("nav.overview")}
                     </button>
 
                     {currentRole === "PATIENT" && (
@@ -180,7 +189,7 @@ const DashboardPlaceholder = ({ roleTitle }) => {
                                         : "text-[#212842]/70 hover:bg-[#F0E7D5] hover:text-[#212842]"
                                 }`}
                             >
-                                Find Doctor
+                                {t("nav.findDoctor")}
                             </button>
 
                             <button
@@ -191,7 +200,7 @@ const DashboardPlaceholder = ({ roleTitle }) => {
                                         : "text-[#212842]/70 hover:bg-[#F0E7D5] hover:text-[#212842]"
                                 }`}
                             >
-                                My Appointments
+                                {t("nav.myAppointments")}
                             </button>
                         </>
                     )}
@@ -205,7 +214,7 @@ const DashboardPlaceholder = ({ roleTitle }) => {
                                     : "text-[#212842]/70 hover:bg-[#F0E7D5] hover:text-[#212842]"
                             }`}
                         >
-                            Clinical Appointments
+                            {t("nav.clinicalAppointments")}
                         </button>
                     )}
 
@@ -218,7 +227,7 @@ const DashboardPlaceholder = ({ roleTitle }) => {
                                     : "text-[#212842]/70 hover:bg-[#F0E7D5] hover:text-[#212842]"
                             }`}
                         >
-                            Find Doctor
+                            {t("nav.findDoctor")}
                         </button>
                     )}
 
@@ -230,7 +239,7 @@ const DashboardPlaceholder = ({ roleTitle }) => {
                                 : "text-[#212842]/70 hover:bg-[#F0E7D5] hover:text-[#212842]"
                         }`}
                     >
-                        Prescriptions ({prescriptions.length})
+                        {t("nav.prescriptions")} ({prescriptions.length})
                     </button>
 
                     <button
@@ -241,7 +250,7 @@ const DashboardPlaceholder = ({ roleTitle }) => {
                                 : "text-[#212842]/70 hover:bg-[#F0E7D5] hover:text-[#212842]"
                         }`}
                     >
-                        Medical Records ({medicalRecords.length})
+                        {t("nav.medicalRecords")} ({medicalRecords.length})
                     </button>
 
                     <button
@@ -252,7 +261,55 @@ const DashboardPlaceholder = ({ roleTitle }) => {
                                 : "text-[#212842]/70 hover:bg-[#F0E7D5] hover:text-[#212842]"
                         }`}
                     >
-                        Blockchain Audit Logs
+                        {t("nav.blockchainAudit")}
+                    </button>
+
+                    <button
+                        onClick={() => setActiveTab("medications")}
+                        className={`px-4 py-2 text-xs font-bold uppercase tracking-wider transition rounded-sm cursor-pointer flex items-center space-x-1.5 ${
+                            activeTab === "medications"
+                                ? "bg-[#212842] text-[#F0E7D5]"
+                                : "text-[#212842]/70 hover:bg-[#F0E7D5] hover:text-[#212842]"
+                        }`}
+                    >
+                        <span>💊</span>
+                        <span>{t("nav.medReminders")}</span>
+                    </button>
+
+                    <button
+                        onClick={() => setActiveTab("emergency")}
+                        className={`px-4 py-2 text-xs font-bold uppercase tracking-wider transition rounded-sm cursor-pointer flex items-center space-x-1.5 ${
+                            activeTab === "emergency"
+                                ? "bg-red-700 text-white"
+                                : "text-red-700 hover:bg-red-100/80"
+                        }`}
+                    >
+                        <span>🚨</span>
+                        <span>{t("nav.emergencyAssistance", "Emergency Assistance")}</span>
+                    </button>
+
+                    <button
+                        onClick={() => setActiveTab("ai-assistant")}
+                        className={`px-4 py-2 text-xs font-bold uppercase tracking-wider transition rounded-sm cursor-pointer flex items-center space-x-1.5 ${
+                            activeTab === "ai-assistant"
+                                ? "bg-[#212842] text-[#F0E7D5]"
+                                : "text-[#212842]/70 hover:bg-[#F0E7D5] hover:text-[#212842]"
+                        }`}
+                    >
+                        <span>🤖</span>
+                        <span>{t("nav.aiHealthAssistant")}</span>
+                    </button>
+
+                    <button
+                        onClick={() => setActiveTab("rural")}
+                        className={`px-4 py-2 text-xs font-bold uppercase tracking-wider transition rounded-sm cursor-pointer flex items-center space-x-1.5 ${
+                            activeTab === "rural"
+                                ? "bg-[#212842] text-[#F0E7D5]"
+                                : "text-[#212842]/70 hover:bg-[#F0E7D5] hover:text-[#212842]"
+                        }`}
+                    >
+                        <span>🌾</span>
+                        <span>{t("nav.ruralHealthcare", "Rural Healthcare")}</span>
                     </button>
                 </div>
             </div>
@@ -266,11 +323,10 @@ const DashboardPlaceholder = ({ roleTitle }) => {
                         <div className="bg-[#FAF6EE] border border-[#212842]/15 p-6 md:p-8 rounded-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                             <div>
                                 <h1 className="text-2xl md:text-3xl font-serif font-bold text-[#212842] tracking-tight">
-                                    Welcome, {user?.name || "Healthcare User"}
+                                    {t("dashboard.welcome")}, {user?.name || "Healthcare User"}
                                 </h1>
                                 <p className="text-[#212842]/70 text-sm mt-1 max-w-2xl">
-                                    AmedicK Healthcare Portal — Authenticated as <strong>{currentRole}</strong>.
-                                    Manage verified doctors, clinical appointments, prescriptions, and encrypted health records.
+                                    {t("dashboard.subtitle")} <strong>{currentRole}</strong>. {t("dashboard.subtitleDesc")}
                                 </p>
                             </div>
 
@@ -280,14 +336,14 @@ const DashboardPlaceholder = ({ roleTitle }) => {
                                         onClick={() => setActiveTab("doctor-appointments")}
                                         className="py-2.5 px-4 bg-[#212842] hover:bg-[#181E32] text-[#F0E7D5] text-xs font-bold rounded-sm border border-[#212842] transition cursor-pointer"
                                     >
-                                        Manage Appointments
+                                        {t("dashboard.manageAppointments")}
                                     </button>
                                 ) : (
                                     <button
                                         onClick={handleOpenBookingModal}
                                         className="py-2.5 px-4 bg-[#212842] hover:bg-[#181E32] text-[#F0E7D5] text-xs font-bold rounded-sm border border-[#212842] transition cursor-pointer"
                                     >
-                                        + Schedule Consultation
+                                        {t("dashboard.scheduleConsultation")}
                                     </button>
                                 )}
                             </div>
@@ -306,13 +362,13 @@ const DashboardPlaceholder = ({ roleTitle }) => {
                                 className="bg-[#FAF6EE] border border-[#212842]/15 p-5 rounded-md hover:border-[#212842] transition cursor-pointer"
                             >
                                 <span className="text-[10px] font-bold uppercase tracking-widest text-[#212842]/70 block mb-1">
-                                    Appointment System
+                                    {t("dashboard.metrics.appointmentSystem")}
                                 </span>
                                 <span className="text-xl font-serif font-bold text-[#212842] block">
-                                    {currentRole === "DOCTOR" ? "Doctor Schedule" : "Patient Bookings"}
+                                    {currentRole === "DOCTOR" ? t("dashboard.metrics.doctorSchedule") : t("dashboard.metrics.patientBookings")}
                                 </span>
                                 <span className="text-xs block text-[#212842]/60 mt-1 underline">
-                                    Click to view live appointments
+                                    {t("dashboard.metrics.clickLiveAppointments")}
                                 </span>
                             </div>
 
@@ -321,37 +377,37 @@ const DashboardPlaceholder = ({ roleTitle }) => {
                                 className="bg-[#FAF6EE] border border-[#212842]/15 p-5 rounded-md hover:border-[#212842] transition cursor-pointer"
                             >
                                 <span className="text-[10px] font-bold uppercase tracking-widest text-[#212842]/70 block mb-1">
-                                    Verified Clinicians
+                                    {t("dashboard.metrics.verifiedClinicians")}
                                 </span>
                                 <span className="text-xl font-serif font-bold text-[#212842] block">
-                                    Find Doctor
+                                    {t("dashboard.metrics.findDoctor")}
                                 </span>
                                 <span className="text-xs block text-[#212842]/60 mt-1 underline">
-                                    Browse verified doctor profiles
+                                    {t("dashboard.metrics.browseProfiles")}
                                 </span>
                             </div>
 
                             <div className="bg-[#FAF6EE] border border-[#212842]/15 p-5 rounded-md">
                                 <span className="text-[10px] font-bold uppercase tracking-widest text-[#212842]/70 block mb-1">
-                                    Digital Prescriptions
+                                    {t("dashboard.metrics.digitalPrescriptions")}
                                 </span>
                                 <span className="text-2xl font-serif font-bold text-[#212842]">
                                     {prescriptions.length}
                                 </span>
                                 <span className="text-xs block text-[#212842]/60 mt-1">
-                                    Active pharmacy records
+                                    {t("dashboard.metrics.activeRecords")}
                                 </span>
                             </div>
 
                             <div className="bg-[#FAF6EE] border border-[#212842]/15 p-5 rounded-md">
                                 <span className="text-[10px] font-bold uppercase tracking-widest text-[#212842]/70 block mb-1">
-                                    Account Security
+                                    {t("dashboard.metrics.accountSecurity")}
                                 </span>
                                 <span className="text-sm font-mono font-bold text-[#212842] uppercase block mt-1">
-                                    VERIFIED ACTIVE
+                                    {t("dashboard.metrics.verifiedActive")}
                                 </span>
                                 <span className="text-xs block text-[#212842]/60 mt-1">
-                                    Multi-Factor OTP Protected
+                                    {t("dashboard.metrics.mfaProtected")}
                                 </span>
                             </div>
                         </div>
@@ -533,6 +589,30 @@ const DashboardPlaceholder = ({ roleTitle }) => {
                             </div>
                         </div>
                     </div>
+                )}
+
+                {/* MEDICATION REMINDERS TAB */}
+                {activeTab === "medications" && <MedicationReminders />}
+
+                {/* EMERGENCY ASSISTANCE TAB */}
+                {activeTab === "emergency" && <EmergencyAssistance />}
+
+                {/* AI HEALTH ASSISTANT TAB */}
+                {activeTab === "ai-assistant" && (
+                    <AiHealthAssistant
+                        onFindSpecialist={(specialty) => {
+                            setActiveTab("find-doctor");
+                        }}
+                    />
+                )}
+
+                {/* RURAL HEALTHCARE TAB */}
+                {activeTab === "rural" && (
+                    <RuralHealthcare
+                        onFindSpecialist={(specialty) => {
+                            setActiveTab("find-doctor");
+                        }}
+                    />
                 )}
             </main>
 

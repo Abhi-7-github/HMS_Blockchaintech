@@ -6,12 +6,14 @@ import {
     completeAppointment,
     cancelAppointment,
 } from "../services/api";
+import ConsultationRoomModal from "./ConsultationRoomModal";
 
 const DoctorAppointments = () => {
     const [appointments, setAppointments] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [errorMessage, setErrorMessage] = useState("");
     const [actionNotice, setActionNotice] = useState("");
+    const [activeConsultationId, setActiveConsultationId] = useState(null);
 
     // Active subtab: "REQUESTS", "UPCOMING", "ALL", "COMPLETED", "CANCELLED_REJECTED"
     const [activeTab, setActiveTab] = useState("REQUESTS");
@@ -382,6 +384,16 @@ const DoctorAppointments = () => {
                                         </>
                                     )}
 
+                                    {["CONFIRMED", "COMPLETED"].includes(apt.status) && (
+                                        <button
+                                            onClick={() => setActiveConsultationId(apt._id)}
+                                            className="py-2 px-4 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs rounded-sm transition cursor-pointer flex items-center space-x-1"
+                                        >
+                                            <span>📹</span>
+                                            <span>Enter Consultation Room</span>
+                                        </button>
+                                    )}
+
                                     {apt.status === "CONFIRMED" && (
                                         <>
                                             <button
@@ -405,6 +417,15 @@ const DoctorAppointments = () => {
                         );
                     })}
                 </div>
+            )}
+
+            {/* TELEMEDICINE CONSULTATION ROOM MODAL */}
+            {activeConsultationId && (
+                <ConsultationRoomModal
+                    appointmentId={activeConsultationId}
+                    onClose={() => setActiveConsultationId(null)}
+                    onRefresh={fetchAppointments}
+                />
             )}
         </div>
     );

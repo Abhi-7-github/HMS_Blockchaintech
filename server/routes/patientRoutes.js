@@ -15,4 +15,10 @@ router.post("/profile", createProfile);
 router.get("/profile", getProfile);
 router.put("/profile", updateProfile);
 
+// Patient medical record access management endpoint
+// @route   GET /api/patients/record-access or GET /api/patient/record-access
+// @desc    Get all medical record access permissions managed by authenticated patient
+router.get("/record-access", require("../controllers/medicalRecordController").getPatientRecordAccess);
+
 module.exports = router;
+

@@ -37,7 +37,9 @@ router.get("/certificates", protect, isDoctor, getDoctorCertificates);
 router.get("/certificates/:id", protect, isDoctor, getCertificateById);
 router.delete("/certificates/:id", protect, isDoctor, deleteCertificateById);
 
-// Public / Authenticated user endpoint to list verified doctors
+// Public / Authenticated user endpoint to list verified doctors and check on-chain proof
 router.get("/verified", protect, getVerifiedDoctors);
+router.get("/:id/verify-onchain", protect, require("../controllers/adminDoctorController").verifyDoctorOnChainStatus);
 
 module.exports = router;
+

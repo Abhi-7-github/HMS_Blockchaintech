@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const crypto = require("crypto");
 const cloudinary = require("../config/cloudinary");
 const Doctor = require("../models/Doctor");
 const DoctorCertificate = require("../models/DoctorCertificate");
@@ -7,6 +8,10 @@ const {
     sendDoctorApprovedEmail,
     sendDoctorRejectedEmail,
 } = require("../utils/sendEmail");
+const {
+    verifyDoctorOnChain,
+    verifyHashOnChain,
+} = require("../blockchain/blockchainService");
 
 /**
  * @desc    Get all doctor profiles with optional verification status filter
@@ -297,7 +302,7 @@ const approveDoctorProfile = async (req, res) => {
             });
         }
 
-        // 2. Requirement 1: Doctor must exist
+        // 2. Doctor must exist
         const doctor = await Doctor.findById(doctorId);
         if (!doctor) {
             return res.status(404).json({
@@ -314,7 +319,7 @@ const approveDoctorProfile = async (req, res) => {
             });
         }
 
-        // 4. Requirement 2: Doctor must have required verification documents
+        // 4. Doctor must have uploaded verification documents (Cloudinary workflow preserved)
         const certificateCount = await DoctorCertificate.countDocuments({ doctorId: doctor._id });
         if (certificateCount === 0) {
             return res.status(400).json({
@@ -323,10 +328,32 @@ const approveDoctorProfile = async (req, res) => {
             });
         }
 
-        // 5. Update fields: verificationStatus = VERIFIED, store verifiedBy, verifiedAt, clear rejectionReason
+        // 5. Generate deterministic verification hash (Zero PII on-chain)
+        const doctorHash = doctor._id.toString();
+        const verificationHash = crypto
+            .createHash("sha256")
+            .update(`${doctor.registrationNumber}_${doctor.specialization}_${doctor.qualification}`)
+            .digest("hex");
+
+        // 6. Write verification proof to blockchain BEFORE marking status as VERIFIED in MongoDB
+        const bcResult = await verifyDoctorOnChain(doctorHash, verificationHash, "VERIFIED");
+
+        // 7. Ensure blockchain transaction succeeded before updating MongoDB
+        if (!bcResult.success) {
+            console.error("Blockchain verification failed:", bcResult.error);
+            return res.status(502).json({
+                success: false,
+                message: `Doctor verification failed on blockchain: ${bcResult.error}. Doctor status was NOT updated to VERIFIED.`,
+            });
+        }
+
+        // 8. Update MongoDB fields only after transaction success
         doctor.verificationStatus = "VERIFIED";
         doctor.verifiedBy = req.user._id;
         doctor.verifiedAt = new Date();
+        doctor.verificationHash = verificationHash;
+        doctor.blockchainRecordId = bcResult.doctorHash;
+        doctor.blockchainTransactionHash = bcResult.transactionHash;
         doctor.rejectionReason = ""; // Clear old rejection reason
 
         await doctor.save();
@@ -344,7 +371,7 @@ const approveDoctorProfile = async (req, res) => {
 
         return res.status(200).json({
             success: true,
-            message: "Doctor profile successfully verified and approved.",
+            message: "Doctor profile successfully verified on blockchain and database.",
             data: updatedDoctor,
         });
     } catch (error) {
@@ -355,6 +382,73 @@ const approveDoctorProfile = async (req, res) => {
         });
     }
 };
+
+/**
+ * @desc    Verify doctor's on-chain verification proof against HealthBridgeRegistry smart contract
+ * @route   GET /api/admin/doctors/:id/verify-onchain or GET /api/doctors/:id/verify-onchain
+ * @access  Private (Authenticated Users / Admin)
+ */
+const verifyDoctorOnChainStatus = async (req, res) => {
+    try {
+        const doctorId = req.params.id;
+
+        if (!mongoose.Types.ObjectId.isValid(doctorId)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid doctor ID format.",
+            });
+        }
+
+        const doctor = await Doctor.findById(doctorId).populate("userId", "name email");
+        if (!doctor) {
+            return res.status(404).json({
+                success: false,
+                message: "Doctor profile not found.",
+            });
+        }
+
+        if (doctor.verificationStatus !== "VERIFIED" || !doctor.verificationHash) {
+            return res.status(200).json({
+                success: true,
+                isVerifiedOnChain: false,
+                message: "Doctor has not been verified on-chain yet.",
+                data: {
+                    doctorId: doctor._id,
+                    dbVerificationStatus: doctor.verificationStatus,
+                    blockchainRecordId: doctor.blockchainRecordId || "",
+                    blockchainTransactionHash: doctor.blockchainTransactionHash || "",
+                },
+            });
+        }
+
+        const doctorHash = doctor._id.toString();
+        const onChainResult = await verifyHashOnChain("DOCTOR", doctorHash, doctor.verificationHash);
+
+        return res.status(200).json({
+            success: true,
+            isVerifiedOnChain: Boolean(onChainResult.isVerified),
+            onChainStatus: onChainResult.status === 1 ? "VERIFIED" : "PENDING/REJECTED",
+            data: {
+                doctorId: doctor._id,
+                doctorName: doctor.userId ? doctor.userId.name : "N/A",
+                registrationNumber: doctor.registrationNumber,
+                dbVerificationStatus: doctor.verificationStatus,
+                verificationHash: doctor.verificationHash,
+                blockchainRecordId: doctor.blockchainRecordId,
+                blockchainTransactionHash: doctor.blockchainTransactionHash,
+                verifiedAt: doctor.verifiedAt,
+            },
+        });
+    } catch (error) {
+        console.error("Error verifying doctor on-chain status:", error.message);
+        return res.status(500).json({
+            success: false,
+            message: "Server error while verifying doctor on-chain status",
+            error: error.message,
+        });
+    }
+};
+
 
 /**
  * @desc    Reject a doctor profile with rejection reason
@@ -455,4 +549,6 @@ module.exports = {
     approveDoctorProfile,
     rejectDoctorProfile,
     verifyDoctor,
+    verifyDoctorOnChainStatus,
 };
+

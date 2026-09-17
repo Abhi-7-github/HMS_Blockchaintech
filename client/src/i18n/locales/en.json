@@ -1,0 +1,122 @@
+{
+  "app": {
+    "title": "AmedicK",
+    "tagline": "CARE ROOTED IN COMPASSION",
+    "portal": "PORTAL",
+    "signOut": "Sign Out",
+    "signIn": "Sign In",
+    "register": "Register",
+    "language": "Language"
+  },
+  "nav": {
+    "overview": "Overview",
+    "findDoctor": "Find Doctor",
+    "myAppointments": "My Appointments",
+    "clinicalAppointments": "Clinical Appointments",
+    "prescriptions": "Prescriptions",
+    "medicalRecords": "Medical Records",
+    "blockchainAudit": "Blockchain Audit Logs",
+    "aiHealthAssistant": "AI Health Assistant",
+    "medReminders": "Medication Reminders",
+    "emergencyAssistance": "Emergency Assistance",
+    "ruralHealthcare": "Rural Healthcare & Wellness"
+  },
+  "medications": {
+    "title": "Medication Reminders & Adherence Tracker",
+    "subtitle": "Daily medicine schedule generated directly from your verified digital prescriptions.",
+    "todaysSchedule": "Today's Scheduled Medicines",
+    "adherenceScore": "Adherence Compliance Score",
+    "history": "Adherence Log History",
+    "dosage": "Dosage",
+    "frequency": "Frequency",
+    "duration": "Duration",
+    "instructions": "Instructions",
+    "timeSlot": "Time Slot",
+    "statusPending": "PENDING",
+    "statusTaken": "TAKEN",
+    "statusSkipped": "SKIPPED",
+    "markTaken": "✓ Mark as Taken",
+    "markSkipped": "✕ Mark as Skipped",
+    "totalDoses": "Total Scheduled Doses",
+    "takenDoses": "Taken Doses",
+    "skippedDoses": "Skipped Doses",
+    "noMedicines": "No active medication reminders scheduled for today."
+  },
+  "dashboard": {
+    "welcome": "Welcome",
+    "subtitle": "AmedicK Healthcare Portal — Authenticated as",
+    "subtitleDesc": "Manage verified doctors, clinical appointments, prescriptions, and encrypted health records.",
+    "scheduleConsultation": "+ Schedule Consultation",
+    "manageAppointments": "Manage Appointments",
+    "metrics": {
+      "appointmentSystem": "Appointment System",
+      "doctorSchedule": "Doctor Schedule",
+      "patientBookings": "Patient Bookings",
+      "clickLiveAppointments": "Click to view live appointments",
+      "verifiedClinicians": "Verified Clinicians",
+      "findDoctor": "Find Doctor",
+      "browseProfiles": "Browse verified doctor profiles",
+      "digitalPrescriptions": "Digital Prescriptions",
+      "activeRecords": "Active pharmacy records",
+      "accountSecurity": "Account Security",
+      "verifiedActive": "VERIFIED ACTIVE",
+      "mfaProtected": "Multi-Factor OTP Protected"
+    }
+  },
+  "prescriptions": {
+    "title": "Digital Medical Prescriptions",
+    "subtitle": "Verified electronic prescriptions issued by attending doctors.",
+    "issueBtn": "+ Issue Digital Prescription",
+    "table": {
+      "id": "Prescription ID",
+      "patient": "Patient Name",
+      "medication": "Medication & Strength",
+      "dosage": "Dosage Instructions",
+      "doctor": "Prescribing Physician",
+      "date": "Issue Date",
+      "verification": "Verification"
+    }
+  },
+  "records": {
+    "title": "Encrypted Patient Medical Records",
+    "subtitle": "Diagnostic reports, assessments, and clinical observations.",
+    "patient": "Patient",
+    "viewReport": "View Report"
+  },
+  "audit": {
+    "title": "Blockchain Integrity Audit Trail",
+    "subtitle": "Immutable ledger verification of all medical records and user authentications.",
+    "table": {
+      "hash": "Transaction Hash",
+      "action": "System Action",
+      "user": "Authenticated User",
+      "timestamp": "Timestamp",
+      "verification": "Integrity Verification"
+    }
+  },
+  "ai": {
+    "title": "HealthBridge AI Health Assistant",
+    "subtitle": "Instant Guidance • Specialist Recommendations • Report Explanation",
+    "welcomeMsg": "Hello! I am your HealthBridge AI Assistant. How can I help you today with symptom guidance, medical report explanations, specialist recommendations, or wellness advice?",
+    "disclaimerTitle": "Medical Disclaimer:",
+    "disclaimerText": "HealthBridge AI provides general health education and symptom guidance. It does NOT replace a qualified medical professional or constitute a formal diagnosis. In case of a medical emergency, call 911 / 112 / 108 immediately.",
+    "suggestedQueries": "Suggested Queries:",
+    "typePlaceholder": "Describe your symptoms, paste a medical report phrase, or ask for health guidance...",
+    "sendBtn": "Send Query ➔",
+    "sending": "Sending...",
+    "clearedMsg": "Conversation cleared. How can I assist you with your health query today?",
+    "clearBtn": "Clear",
+    "emergencyAlert": "POTENTIAL EMERGENCY DETECTED",
+    "emergencyText": "Please seek immediate professional medical attention at the nearest emergency room.",
+    "recommendedSpecialists": "Recommended Specialists for Consultation:",
+    "findBook": "Find & Book",
+    "analyzing": "HealthBridge AI is analyzing query...",
+    "retry": "Retry Query",
+    "queries": [
+      "I have a headache, mild fever, and fatigue. What should I do?",
+      "Can you explain what an HbA1c level of 6.2% means in simple terms?",
+      "Which specialist should I consult for persistent lower back pain?",
+      "What are some key preventive lifestyle habits to manage blood pressure?"
+    ]
+  }
+}

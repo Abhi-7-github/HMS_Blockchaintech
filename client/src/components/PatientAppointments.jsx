@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { getPatientAppointments, cancelAppointment } from "../services/api";
+import ConsultationRoomModal from "./ConsultationRoomModal";
 
 const PatientAppointments = ({ onOpenBookModal }) => {
     const [appointments, setAppointments] = useState([]);
@@ -7,6 +8,7 @@ const PatientAppointments = ({ onOpenBookModal }) => {
     const [errorMessage, setErrorMessage] = useState("");
     const [actionNotice, setActionNotice] = useState("");
     const [cancellingId, setCancellingId] = useState(null);
+    const [activeConsultationId, setActiveConsultationId] = useState(null);
 
     // Active status filter tab
     const [statusFilter, setStatusFilter] = useState("ALL");
@@ -234,21 +236,40 @@ const PatientAppointments = ({ onOpenBookModal }) => {
                                 </div>
 
                                 {/* Actions */}
-                                {canCancel && (
-                                    <div className="flex items-center space-x-2 w-full md:w-auto border-t md:border-t-0 border-[#212842]/15 pt-3 md:pt-0">
+                                <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-2 w-full md:w-auto border-t md:border-t-0 border-[#212842]/15 pt-3 md:pt-0">
+                                    {["CONFIRMED", "COMPLETED"].includes(apt.status) && (
+                                        <button
+                                            onClick={() => setActiveConsultationId(apt._id)}
+                                            className="w-full sm:w-auto py-2 px-4 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs rounded-sm transition cursor-pointer flex items-center justify-center space-x-1"
+                                        >
+                                            <span>📹</span>
+                                            <span>Enter Consultation Room</span>
+                                        </button>
+                                    )}
+
+                                    {canCancel && (
                                         <button
                                             onClick={() => handleCancel(apt._id)}
                                             disabled={cancellingId === apt._id}
-                                            className="w-full md:w-auto py-2 px-4 bg-rose-900 hover:bg-rose-950 text-white font-bold text-xs rounded-sm transition cursor-pointer disabled:opacity-50"
+                                            className="w-full sm:w-auto py-2 px-4 bg-rose-900 hover:bg-rose-950 text-white font-bold text-xs rounded-sm transition cursor-pointer disabled:opacity-50"
                                         >
                                             {cancellingId === apt._id ? "Cancelling..." : "Cancel Appointment"}
                                         </button>
-                                    </div>
-                                )}
+                                    )}
+                                </div>
                             </div>
                         );
                     })}
                 </div>
+            )}
+
+            {/* TELEMEDICINE CONSULTATION ROOM MODAL */}
+            {activeConsultationId && (
+                <ConsultationRoomModal
+                    appointmentId={activeConsultationId}
+                    onClose={() => setActiveConsultationId(null)}
+                    onRefresh={fetchAppointments}
+                />
             )}
         </div>
     );
