@@ -113,6 +113,20 @@ export const createDoctorProfile = async (profileData) => {
 };
 
 /**
+ * Fetch authenticated doctor profile
+ */
+export const getDoctorProfile = async () => {
+    return await api.get("/doctor/profile");
+};
+
+/**
+ * Fetch doctor verification status and certificate details
+ */
+export const getDoctorVerificationStatus = async () => {
+    return await api.get("/doctor/verification-status");
+};
+
+/**
  * Upload Doctor Verification Certificate
  * @param {FormData} formData
  */
@@ -122,6 +136,21 @@ export const uploadDoctorCertificate = async (formData) => {
             "Content-Type": "multipart/form-data",
         },
     });
+};
+
+/**
+ * Fetch all certificates for authenticated doctor
+ */
+export const getDoctorCertificates = async () => {
+    return await api.get("/doctors/certificates");
+};
+
+/**
+ * Delete a specific certificate by ID (Doctor only)
+ * @param {string} id - Certificate ObjectId
+ */
+export const deleteDoctorCertificate = async (id) => {
+    return await api.delete(`/doctors/certificates/${id}`);
 };
 
 // 7. Admin Doctor Verification API Functions

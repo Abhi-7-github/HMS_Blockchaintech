@@ -30,7 +30,7 @@ router.post(
     "/certificates",
     protect,
     isDoctor,
-    uploadCertificateMiddleware.single("certificate"),
+    uploadCertificateMiddleware,
     uploadCertificate
 );
 router.get("/certificates", protect, isDoctor, getDoctorCertificates);

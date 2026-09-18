@@ -213,10 +213,9 @@ const updateProfile = async (req, res) => {
  */
 const getVerifiedDoctors = async (req, res) => {
     try {
-        const verifiedDoctors = await Doctor.find({ verificationStatus: "VERIFIED" }).populate(
-            "userId",
-            "name email phone role"
-        );
+        const verifiedDoctors = await Doctor.find({
+            verificationStatus: { $in: ["APPROVED", "VERIFIED"] },
+        }).populate("userId", "name email phone role");
 
         return res.status(200).json({
             success: true,

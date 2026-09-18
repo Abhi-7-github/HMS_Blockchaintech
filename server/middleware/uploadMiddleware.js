@@ -25,4 +25,32 @@ const uploadCertificateMiddleware = multer({
     fileFilter: fileFilter,
 });
 
-module.exports = uploadCertificateMiddleware;
+/**
+ * Express wrapper middleware to gracefully catch Multer validation & file size errors
+ * and return structured HTTP 400 JSON error responses.
+ */
+const handleCertificateUpload = (req, res, next) => {
+    uploadCertificateMiddleware.single("certificate")(req, res, (err) => {
+        if (err instanceof multer.MulterError) {
+            if (err.code === "LIMIT_FILE_SIZE") {
+                const maxSizeMb = (envConfig.MAX_CERTIFICATE_FILE_SIZE_BYTES / (1024 * 1024)).toFixed(1);
+                return res.status(400).json({
+                    success: false,
+                    message: `File size exceeds the limit of ${maxSizeMb} MB.`,
+                });
+            }
+            return res.status(400).json({
+                success: false,
+                message: `Upload error: ${err.message}`,
+            });
+        } else if (err) {
+            return res.status(400).json({
+                success: false,
+                message: err.message || "Invalid file upload.",
+            });
+        }
+        next();
+    });
+};
+
+module.exports = handleCertificateUpload;

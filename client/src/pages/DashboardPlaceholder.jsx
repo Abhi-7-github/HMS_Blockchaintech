@@ -9,6 +9,7 @@ import AiHealthAssistant from "../components/AiHealthAssistant";
 import MedicationReminders from "../components/MedicationReminders";
 import EmergencyAssistance from "../components/EmergencyAssistance";
 import RuralHealthcare from "../components/RuralHealthcare";
+import DoctorCertificateManager from "../components/DoctorCertificateManager";
 import LanguageSelector from "../components/LanguageSelector";
 import { useLanguage } from "../i18n/i18nContext";
 
@@ -311,6 +312,30 @@ const DashboardPlaceholder = ({ roleTitle, initialTab = "overview" }) => {
                         <span>🌾</span>
                         <span>{t("nav.ruralHealthcare", "Rural Healthcare")}</span>
                     </button>
+
+                    {currentRole === "DOCTOR" && (
+                        <button
+                            onClick={() => setActiveTab("verification")}
+                            className={`px-4 py-2 text-xs font-bold uppercase tracking-wider transition rounded-sm cursor-pointer flex items-center space-x-1.5 ${
+                                activeTab === "verification"
+                                    ? "bg-[#212842] text-[#F0E7D5]"
+                                    : "text-[#212842]/70 hover:bg-[#F0E7D5] hover:text-[#212842]"
+                            }`}
+                        >
+                            <span>📜</span>
+                            <span>Certificate Verification</span>
+                        </button>
+                    )}
+
+                    {currentRole === "ADMIN" && (
+                        <button
+                            onClick={() => navigate("/admin/doctors")}
+                            className="px-4 py-2 text-xs font-bold uppercase tracking-wider transition rounded-sm cursor-pointer flex items-center space-x-1.5 bg-amber-800 text-white hover:bg-amber-900"
+                        >
+                            <span>🛡️</span>
+                            <span>Doctor Approvals</span>
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -433,6 +458,9 @@ const DashboardPlaceholder = ({ roleTitle, initialTab = "overview" }) => {
 
                 {/* CLINICAL APPOINTMENTS TAB (DOCTOR) */}
                 {activeTab === "doctor-appointments" && <DoctorAppointments />}
+
+                {/* DOCTOR CERTIFICATE VERIFICATION TAB */}
+                {activeTab === "verification" && <DoctorCertificateManager />}
 
                 {/* PRESCRIPTIONS TAB */}
                 {activeTab === "prescriptions" && (

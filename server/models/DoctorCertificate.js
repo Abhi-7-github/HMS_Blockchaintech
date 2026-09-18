@@ -53,7 +53,7 @@ const doctorCertificateSchema = new mongoose.Schema(
             trim: true,
             default: "PENDING",
             enum: {
-                values: ["PENDING", "VERIFIED", "REJECTED"],
+                values: ["PENDING", "APPROVED", "VERIFIED", "REJECTED"],
                 message: "{VALUE} is not a valid verification status",
             },
         },

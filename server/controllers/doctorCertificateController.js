@@ -105,6 +105,13 @@ const uploadCertificate = async (req, res) => {
             throw dbError; // Rethrow to main error block
         }
 
+        // Set Doctor verification status to PENDING upon certificate upload/resubmission
+        doctor.verificationStatus = "PENDING";
+        doctor.rejectionReason = "";
+        doctor.verifiedBy = null;
+        doctor.verifiedAt = null;
+        await doctor.save();
+
         // 7. Return certificate metadata only (Never return Cloudinary secrets)
         return res.status(201).json({
             success: true,

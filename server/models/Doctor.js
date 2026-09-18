@@ -56,7 +56,7 @@ const doctorSchema = new mongoose.Schema(
             type: String,
             uppercase: true,
             enum: {
-                values: ["PENDING", "VERIFIED", "REJECTED"],
+                values: ["PENDING", "APPROVED", "VERIFIED", "REJECTED"],
                 message: "{VALUE} is not a valid verification status",
             },
             default: "PENDING", // Requirement 3: New doctors must start as PENDING
