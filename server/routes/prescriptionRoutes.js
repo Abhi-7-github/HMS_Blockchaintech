@@ -30,13 +30,13 @@ router.get("/doctor", isDoctor, getDoctorPrescriptions);
 
 // @route   GET /api/prescriptions/:id/verify
 // @desc    Verify prescription integrity against blockchain
-// @access  Private (Patient, Doctor, Admin)
-router.get("/:id/verify", authorize("PATIENT", "DOCTOR", "ADMIN"), verifyPrescriptionIntegrity);
+// @access  Private (Patient, Doctor, Admin, Pharmacy)
+router.get("/:id/verify", authorize("PATIENT", "DOCTOR", "ADMIN", "PHARMACY"), verifyPrescriptionIntegrity);
 
 // @route   GET /api/prescriptions/:id
 // @desc    Get single prescription by ID
-// @access  Private (Patient, Doctor, Admin)
-router.get("/:id", authorize("PATIENT", "DOCTOR", "ADMIN"), getPrescriptionById);
+// @access  Private (Patient, Doctor, Admin, Pharmacy)
+router.get("/:id", authorize("PATIENT", "DOCTOR", "ADMIN", "PHARMACY"), getPrescriptionById);
 
 
 module.exports = router;

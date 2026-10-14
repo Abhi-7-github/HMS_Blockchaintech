@@ -1,6 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getCurrentUser, logout, getVerifiedDoctors } from "../services/api";
+import {
+    getCurrentUser,
+    logout,
+    getVerifiedDoctors,
+    getPatientPrescriptions,
+    getDoctorPrescriptions,
+    getMedicalRecords,
+} from "../services/api";
 import PatientFindDoctors from "../components/PatientFindDoctors";
 import PatientAppointments from "../components/PatientAppointments";
 import DoctorAppointments from "../components/DoctorAppointments";
@@ -30,35 +37,85 @@ const DashboardPlaceholder = ({ roleTitle, initialTab = "overview" }) => {
 
     // Form input state for prescriptions
     const [prescriptionForm, setPrescriptionForm] = useState({
-        patientName: "Arthur Pendelton",
-        medication: "Amoxicillin 500mg",
-        dosage: "1 tablet 3x daily",
-        notes: "Take after food for 7 days",
+        patientName: "",
+        medication: "",
+        dosage: "",
+        notes: "",
     });
 
-    const [prescriptions, setPrescriptions] = useState([
-        { id: "RX-4091", patient: "Arthur Pendelton", doctor: "Dr. Sarah Jenkins", medication: "Lisinopril 10mg", dosage: "Once daily in morning", date: "2026-09-01", status: "VERIFIED_ACTIVE" },
-        { id: "RX-4092", patient: "Eleanor Vance", doctor: "Dr. Marcus Thorne", medication: "Metformin 500mg", dosage: "Twice daily with meals", date: "2026-08-28", status: "VERIFIED_ACTIVE" },
-        { id: "RX-4093", patient: "Clara Oswald", doctor: "Dr. Elena Rostova", medication: "Ibuprofen 400mg", dosage: "As needed for pain max 3x daily", date: "2026-08-25", status: "DISPENSED" },
-    ]);
-
-    const [medicalRecords] = useState([
-        { id: "REC-1029", patient: "Arthur Pendelton", type: "Cardiovascular Screening", date: "2026-08-30", doctor: "Dr. Sarah Jenkins", summary: "Normal sinus rhythm. Blood pressure 120/80 mmHg." },
-        { id: "REC-1030", patient: "Eleanor Vance", type: "MRI Brain Scan", date: "2026-08-22", doctor: "Dr. Marcus Thorne", summary: "No structural abnormalities observed. Follow-up recommended in 6 months." },
-        { id: "REC-1031", patient: "Julian Hayes", type: "Orthopedic Assessment", date: "2026-08-15", doctor: "Dr. Elena Rostova", summary: "Left knee ligament strain. Conservative physical therapy advised." },
-    ]);
-
-    const [auditLogs] = useState([
-        { hash: "0x8f2a...99b1", action: "Prescription Signed", user: "Dr. Sarah Jenkins", timestamp: "2026-09-03 08:45:12" },
-        { hash: "0x3c1d...44a7", action: "Patient Record Verified", user: "Admin Audit Node", timestamp: "2026-09-03 08:12:04" },
-        { hash: "0x7e8b...12c9", action: "OTP Multi-Factor Session Auth", user: "Arthur Pendelton", timestamp: "2026-09-03 07:55:30" },
-    ]);
+    const [prescriptions, setPrescriptions] = useState([]);
+    const [medicalRecords, setMedicalRecords] = useState([]);
+    const [auditLogs, setAuditLogs] = useState([]);
 
     useEffect(() => {
         const fetchProfile = async () => {
             try {
                 const res = await getCurrentUser();
-                setUser(res.user);
+                const fetchedUser = res?.user || null;
+                setUser(fetchedUser);
+
+                const role = (fetchedUser?.role || roleTitle || "PATIENT").toUpperCase();
+
+                // Fetch role-specific real prescriptions
+                try {
+                    let rxRes = null;
+                    if (role === "PATIENT") {
+                        rxRes = await getPatientPrescriptions();
+                    } else if (role === "DOCTOR") {
+                        rxRes = await getDoctorPrescriptions();
+                    }
+                    if (rxRes?.success && Array.isArray(rxRes.data) && rxRes.data.length > 0) {
+                        const formattedRx = rxRes.data.map((rx) => ({
+                            id: rx._id ? `RX-${rx._id.slice(-4).toUpperCase()}` : (rx.id || "RX-LIVE"),
+                            patient: rx.patientId?.userId?.name || rx.patient || "Patient",
+                            doctor: rx.doctorId?.userId?.name ? `Dr. ${rx.doctorId.userId.name}` : (rx.doctor || "Attending Physician"),
+                            medication: rx.medicines && rx.medicines.length > 0 ? rx.medicines.map((m) => m.name).join(", ") : (rx.medication || "Prescribed Medication"),
+                            dosage: rx.medicines && rx.medicines.length > 0 ? rx.medicines.map((m) => m.dosage).join(", ") : (rx.dosage || "As directed"),
+                            date: rx.createdAt ? new Date(rx.createdAt).toISOString().split("T")[0] : (rx.date || new Date().toISOString().split("T")[0]),
+                            status: rx.blockchainTransactionHash ? "BLOCK_VERIFIED" : (rx.status || "ACTIVE"),
+                            hash: rx.blockchainTransactionHash || (rx._id ? `0x${rx._id.slice(-8)}...${rx._id.slice(0, 4)}` : null),
+                        }));
+                        setPrescriptions(formattedRx);
+
+                        const logs = formattedRx
+                            .filter((rx) => rx.hash)
+                            .map((rx) => ({
+                                hash: rx.hash,
+                                action: "Prescription Signed & Verified",
+                                user: rx.doctor,
+                                timestamp: rx.date,
+                            }));
+                        setAuditLogs(logs);
+                    } else {
+                        setPrescriptions([]);
+                        setAuditLogs([]);
+                    }
+                } catch (rxErr) {
+                    console.warn("Prescriptions fetch notice:", rxErr.message);
+                    setPrescriptions([]);
+                    setAuditLogs([]);
+                }
+
+                // Fetch role-specific medical records
+                try {
+                    const recRes = await getMedicalRecords();
+                    if (recRes?.success && Array.isArray(recRes.data) && recRes.data.length > 0) {
+                        const formattedRecs = recRes.data.map((rec) => ({
+                            id: rec._id ? `REC-${rec._id.slice(-4).toUpperCase()}` : (rec.id || "REC-LIVE"),
+                            patient: rec.patientId?.userId?.name || rec.patient || "Patient",
+                            type: rec.recordType || rec.title || "Clinical Record",
+                            date: rec.createdAt ? new Date(rec.createdAt).toISOString().split("T")[0] : (rec.date || "Recent"),
+                            doctor: rec.uploadedBy?.name ? `Dr. ${rec.uploadedBy.name}` : "Attending Clinician",
+                            summary: rec.description || rec.title || "Diagnostic summary on record.",
+                        }));
+                        setMedicalRecords(formattedRecs);
+                    } else {
+                        setMedicalRecords([]);
+                    }
+                } catch (recErr) {
+                    console.warn("Medical records fetch notice:", recErr.message);
+                    setMedicalRecords([]);
+                }
             } catch (err) {
                 console.error("Failed to fetch profile:", err.message);
                 logout();
@@ -69,7 +126,7 @@ const DashboardPlaceholder = ({ roleTitle, initialTab = "overview" }) => {
         };
 
         fetchProfile();
-    }, [navigate]);
+    }, [navigate, roleTitle]);
 
     const handleLogout = () => {
         logout();
@@ -104,6 +161,20 @@ const DashboardPlaceholder = ({ roleTitle, initialTab = "overview" }) => {
     };
 
     const currentRole = (user?.role || roleTitle || "PATIENT").toUpperCase();
+
+    // Restrict activeTab strictly to tabs permitted for the authenticated role
+    useEffect(() => {
+        const allowedTabs = {
+            PATIENT: ["overview", "find-doctor", "my-appointments", "prescriptions", "records", "medications", "emergency", "ai-assistant", "rural", "audit"],
+            DOCTOR: ["overview", "doctor-appointments", "prescriptions", "records", "emergency", "verification", "audit"],
+            ADMIN: ["overview", "prescriptions", "records", "emergency", "audit"],
+            PHARMACY: ["overview", "prescriptions", "audit"],
+        };
+        const roleAllowed = allowedTabs[currentRole] || allowedTabs.PATIENT;
+        if (!roleAllowed.includes(activeTab)) {
+            setActiveTab("overview");
+        }
+    }, [currentRole, activeTab]);
 
     if (isLoading) {
         return (
@@ -166,9 +237,10 @@ const DashboardPlaceholder = ({ roleTitle, initialTab = "overview" }) => {
                 </div>
             </header>
 
-            {/* Sub-Header Navigation Bar */}
+            {/* Sub-Header Navigation Bar - Strictly Role-Specific */}
             <div className="bg-[#FAF6EE] border-b border-[#212842]/15 px-4 sm:px-6 lg:px-8">
                 <div className="max-w-7xl mx-auto flex items-center space-x-1 overflow-x-auto py-2">
+                    {/* Common to all roles: Overview */}
                     <button
                         onClick={() => setActiveTab("overview")}
                         className={`px-4 py-2 text-xs font-bold uppercase tracking-wider transition rounded-sm cursor-pointer ${
@@ -180,6 +252,7 @@ const DashboardPlaceholder = ({ roleTitle, initialTab = "overview" }) => {
                         {t("nav.overview")}
                     </button>
 
+                    {/* PATIENT ROLE NAVIGATION */}
                     {currentRole === "PATIENT" && (
                         <>
                             <button
@@ -203,57 +276,203 @@ const DashboardPlaceholder = ({ roleTitle, initialTab = "overview" }) => {
                             >
                                 {t("nav.myAppointments")}
                             </button>
+
+                            <button
+                                onClick={() => setActiveTab("prescriptions")}
+                                className={`px-4 py-2 text-xs font-bold uppercase tracking-wider transition rounded-sm cursor-pointer ${
+                                    activeTab === "prescriptions"
+                                        ? "bg-[#212842] text-[#F0E7D5]"
+                                        : "text-[#212842]/70 hover:bg-[#F0E7D5] hover:text-[#212842]"
+                                }`}
+                            >
+                                {t("nav.prescriptions")} ({prescriptions.length})
+                            </button>
+
+                            <button
+                                onClick={() => setActiveTab("records")}
+                                className={`px-4 py-2 text-xs font-bold uppercase tracking-wider transition rounded-sm cursor-pointer ${
+                                    activeTab === "records"
+                                        ? "bg-[#212842] text-[#F0E7D5]"
+                                        : "text-[#212842]/70 hover:bg-[#F0E7D5] hover:text-[#212842]"
+                                }`}
+                            >
+                                {t("nav.medicalRecords")} ({medicalRecords.length})
+                            </button>
+
+                            <button
+                                onClick={() => setActiveTab("medications")}
+                                className={`px-4 py-2 text-xs font-bold uppercase tracking-wider transition rounded-sm cursor-pointer flex items-center space-x-1.5 ${
+                                    activeTab === "medications"
+                                        ? "bg-[#212842] text-[#F0E7D5]"
+                                        : "text-[#212842]/70 hover:bg-[#F0E7D5] hover:text-[#212842]"
+                                }`}
+                            >
+                                <span>💊</span>
+                                <span>{t("nav.medReminders")}</span>
+                            </button>
+
+                            <button
+                                onClick={() => setActiveTab("emergency")}
+                                className={`px-4 py-2 text-xs font-bold uppercase tracking-wider transition rounded-sm cursor-pointer flex items-center space-x-1.5 ${
+                                    activeTab === "emergency"
+                                        ? "bg-red-700 text-white"
+                                        : "text-red-700 hover:bg-red-100/80"
+                                }`}
+                            >
+                                <span>🚨</span>
+                                <span>{t("nav.emergencyAssistance", "Emergency Assistance")}</span>
+                            </button>
+
+                            <button
+                                onClick={() => setActiveTab("ai-assistant")}
+                                className={`px-4 py-2 text-xs font-bold uppercase tracking-wider transition rounded-sm cursor-pointer flex items-center space-x-1.5 ${
+                                    activeTab === "ai-assistant"
+                                        ? "bg-[#212842] text-[#F0E7D5]"
+                                        : "text-[#212842]/70 hover:bg-[#F0E7D5] hover:text-[#212842]"
+                                }`}
+                            >
+                                <span>🤖</span>
+                                <span>{t("nav.aiHealthAssistant")}</span>
+                            </button>
+
+                            <button
+                                onClick={() => setActiveTab("rural")}
+                                className={`px-4 py-2 text-xs font-bold uppercase tracking-wider transition rounded-sm cursor-pointer flex items-center space-x-1.5 ${
+                                    activeTab === "rural"
+                                        ? "bg-[#212842] text-[#F0E7D5]"
+                                        : "text-[#212842]/70 hover:bg-[#F0E7D5] hover:text-[#212842]"
+                                }`}
+                            >
+                                <span>🌾</span>
+                                <span>{t("nav.ruralHealthcare", "Rural Healthcare")}</span>
+                            </button>
                         </>
                     )}
 
+                    {/* DOCTOR ROLE NAVIGATION */}
                     {currentRole === "DOCTOR" && (
+                        <>
+                            <button
+                                onClick={() => setActiveTab("doctor-appointments")}
+                                className={`px-4 py-2 text-xs font-bold uppercase tracking-wider transition rounded-sm cursor-pointer ${
+                                    activeTab === "doctor-appointments"
+                                        ? "bg-[#212842] text-[#F0E7D5]"
+                                        : "text-[#212842]/70 hover:bg-[#F0E7D5] hover:text-[#212842]"
+                                }`}
+                            >
+                                {t("nav.clinicalAppointments")}
+                            </button>
+
+                            <button
+                                onClick={() => setActiveTab("prescriptions")}
+                                className={`px-4 py-2 text-xs font-bold uppercase tracking-wider transition rounded-sm cursor-pointer ${
+                                    activeTab === "prescriptions"
+                                        ? "bg-[#212842] text-[#F0E7D5]"
+                                        : "text-[#212842]/70 hover:bg-[#F0E7D5] hover:text-[#212842]"
+                                }`}
+                            >
+                                Digital Prescriptions ({prescriptions.length})
+                            </button>
+
+                            <button
+                                onClick={() => setActiveTab("records")}
+                                className={`px-4 py-2 text-xs font-bold uppercase tracking-wider transition rounded-sm cursor-pointer ${
+                                    activeTab === "records"
+                                        ? "bg-[#212842] text-[#F0E7D5]"
+                                        : "text-[#212842]/70 hover:bg-[#F0E7D5] hover:text-[#212842]"
+                                }`}
+                            >
+                                Patient Records ({medicalRecords.length})
+                            </button>
+
+                            <button
+                                onClick={() => setActiveTab("emergency")}
+                                className={`px-4 py-2 text-xs font-bold uppercase tracking-wider transition rounded-sm cursor-pointer flex items-center space-x-1.5 ${
+                                    activeTab === "emergency"
+                                        ? "bg-red-700 text-white"
+                                        : "text-red-700 hover:bg-red-100/80"
+                                }`}
+                            >
+                                <span>🚨</span>
+                                <span>Emergency Triage</span>
+                            </button>
+
+                            <button
+                                onClick={() => setActiveTab("verification")}
+                                className={`px-4 py-2 text-xs font-bold uppercase tracking-wider transition rounded-sm cursor-pointer flex items-center space-x-1.5 ${
+                                    activeTab === "verification"
+                                        ? "bg-[#212842] text-[#F0E7D5]"
+                                        : "text-[#212842]/70 hover:bg-[#F0E7D5] hover:text-[#212842]"
+                                }`}
+                            >
+                                <span>📜</span>
+                                <span>Certificate Verification</span>
+                            </button>
+                        </>
+                    )}
+
+                    {/* ADMIN ROLE NAVIGATION */}
+                    {currentRole === "ADMIN" && (
+                        <>
+                            <button
+                                onClick={() => navigate("/admin/doctors")}
+                                className="px-4 py-2 text-xs font-bold uppercase tracking-wider transition rounded-sm cursor-pointer flex items-center space-x-1.5 bg-amber-800 text-white hover:bg-amber-900"
+                            >
+                                <span>🛡️</span>
+                                <span>Doctor Approvals</span>
+                            </button>
+
+                            <button
+                                onClick={() => setActiveTab("prescriptions")}
+                                className={`px-4 py-2 text-xs font-bold uppercase tracking-wider transition rounded-sm cursor-pointer ${
+                                    activeTab === "prescriptions"
+                                        ? "bg-[#212842] text-[#F0E7D5]"
+                                        : "text-[#212842]/70 hover:bg-[#F0E7D5] hover:text-[#212842]"
+                                }`}
+                            >
+                                Prescriptions Registry ({prescriptions.length})
+                            </button>
+
+                            <button
+                                onClick={() => setActiveTab("records")}
+                                className={`px-4 py-2 text-xs font-bold uppercase tracking-wider transition rounded-sm cursor-pointer ${
+                                    activeTab === "records"
+                                        ? "bg-[#212842] text-[#F0E7D5]"
+                                        : "text-[#212842]/70 hover:bg-[#F0E7D5] hover:text-[#212842]"
+                                }`}
+                            >
+                                Records Registry ({medicalRecords.length})
+                            </button>
+
+                            <button
+                                onClick={() => setActiveTab("emergency")}
+                                className={`px-4 py-2 text-xs font-bold uppercase tracking-wider transition rounded-sm cursor-pointer flex items-center space-x-1.5 ${
+                                    activeTab === "emergency"
+                                        ? "bg-red-700 text-white"
+                                        : "text-red-700 hover:bg-red-100/80"
+                                }`}
+                            >
+                                <span>🚨</span>
+                                <span>Emergency Audit</span>
+                            </button>
+                        </>
+                    )}
+
+                    {/* PHARMACY ROLE NAVIGATION */}
+                    {currentRole === "PHARMACY" && (
                         <button
-                            onClick={() => setActiveTab("doctor-appointments")}
+                            onClick={() => setActiveTab("prescriptions")}
                             className={`px-4 py-2 text-xs font-bold uppercase tracking-wider transition rounded-sm cursor-pointer ${
-                                activeTab === "doctor-appointments"
+                                activeTab === "prescriptions"
                                     ? "bg-[#212842] text-[#F0E7D5]"
                                     : "text-[#212842]/70 hover:bg-[#F0E7D5] hover:text-[#212842]"
                             }`}
                         >
-                            {t("nav.clinicalAppointments")}
+                            Prescriptions & Dispensing ({prescriptions.length})
                         </button>
                     )}
 
-                    {currentRole !== "PATIENT" && currentRole !== "DOCTOR" && (
-                        <button
-                            onClick={() => setActiveTab("find-doctor")}
-                            className={`px-4 py-2 text-xs font-bold uppercase tracking-wider transition rounded-sm cursor-pointer ${
-                                activeTab === "find-doctor"
-                                    ? "bg-[#212842] text-[#F0E7D5]"
-                                    : "text-[#212842]/70 hover:bg-[#F0E7D5] hover:text-[#212842]"
-                            }`}
-                        >
-                            {t("nav.findDoctor")}
-                        </button>
-                    )}
-
-                    <button
-                        onClick={() => setActiveTab("prescriptions")}
-                        className={`px-4 py-2 text-xs font-bold uppercase tracking-wider transition rounded-sm cursor-pointer ${
-                            activeTab === "prescriptions"
-                                ? "bg-[#212842] text-[#F0E7D5]"
-                                : "text-[#212842]/70 hover:bg-[#F0E7D5] hover:text-[#212842]"
-                        }`}
-                    >
-                        {t("nav.prescriptions")} ({prescriptions.length})
-                    </button>
-
-                    <button
-                        onClick={() => setActiveTab("records")}
-                        className={`px-4 py-2 text-xs font-bold uppercase tracking-wider transition rounded-sm cursor-pointer ${
-                            activeTab === "records"
-                                ? "bg-[#212842] text-[#F0E7D5]"
-                                : "text-[#212842]/70 hover:bg-[#F0E7D5] hover:text-[#212842]"
-                        }`}
-                    >
-                        {t("nav.medicalRecords")} ({medicalRecords.length})
-                    </button>
-
+                    {/* Common to all roles: Blockchain Audit */}
                     <button
                         onClick={() => setActiveTab("audit")}
                         className={`px-4 py-2 text-xs font-bold uppercase tracking-wider transition rounded-sm cursor-pointer ${
@@ -264,78 +483,6 @@ const DashboardPlaceholder = ({ roleTitle, initialTab = "overview" }) => {
                     >
                         {t("nav.blockchainAudit")}
                     </button>
-
-                    <button
-                        onClick={() => setActiveTab("medications")}
-                        className={`px-4 py-2 text-xs font-bold uppercase tracking-wider transition rounded-sm cursor-pointer flex items-center space-x-1.5 ${
-                            activeTab === "medications"
-                                ? "bg-[#212842] text-[#F0E7D5]"
-                                : "text-[#212842]/70 hover:bg-[#F0E7D5] hover:text-[#212842]"
-                        }`}
-                    >
-                        <span>💊</span>
-                        <span>{t("nav.medReminders")}</span>
-                    </button>
-
-                    <button
-                        onClick={() => setActiveTab("emergency")}
-                        className={`px-4 py-2 text-xs font-bold uppercase tracking-wider transition rounded-sm cursor-pointer flex items-center space-x-1.5 ${
-                            activeTab === "emergency"
-                                ? "bg-red-700 text-white"
-                                : "text-red-700 hover:bg-red-100/80"
-                        }`}
-                    >
-                        <span>🚨</span>
-                        <span>{t("nav.emergencyAssistance", "Emergency Assistance")}</span>
-                    </button>
-
-                    <button
-                        onClick={() => setActiveTab("ai-assistant")}
-                        className={`px-4 py-2 text-xs font-bold uppercase tracking-wider transition rounded-sm cursor-pointer flex items-center space-x-1.5 ${
-                            activeTab === "ai-assistant"
-                                ? "bg-[#212842] text-[#F0E7D5]"
-                                : "text-[#212842]/70 hover:bg-[#F0E7D5] hover:text-[#212842]"
-                        }`}
-                    >
-                        <span>🤖</span>
-                        <span>{t("nav.aiHealthAssistant")}</span>
-                    </button>
-
-                    <button
-                        onClick={() => setActiveTab("rural")}
-                        className={`px-4 py-2 text-xs font-bold uppercase tracking-wider transition rounded-sm cursor-pointer flex items-center space-x-1.5 ${
-                            activeTab === "rural"
-                                ? "bg-[#212842] text-[#F0E7D5]"
-                                : "text-[#212842]/70 hover:bg-[#F0E7D5] hover:text-[#212842]"
-                        }`}
-                    >
-                        <span>🌾</span>
-                        <span>{t("nav.ruralHealthcare", "Rural Healthcare")}</span>
-                    </button>
-
-                    {currentRole === "DOCTOR" && (
-                        <button
-                            onClick={() => setActiveTab("verification")}
-                            className={`px-4 py-2 text-xs font-bold uppercase tracking-wider transition rounded-sm cursor-pointer flex items-center space-x-1.5 ${
-                                activeTab === "verification"
-                                    ? "bg-[#212842] text-[#F0E7D5]"
-                                    : "text-[#212842]/70 hover:bg-[#F0E7D5] hover:text-[#212842]"
-                            }`}
-                        >
-                            <span>📜</span>
-                            <span>Certificate Verification</span>
-                        </button>
-                    )}
-
-                    {currentRole === "ADMIN" && (
-                        <button
-                            onClick={() => navigate("/admin/doctors")}
-                            className="px-4 py-2 text-xs font-bold uppercase tracking-wider transition rounded-sm cursor-pointer flex items-center space-x-1.5 bg-amber-800 text-white hover:bg-amber-900"
-                        >
-                            <span>🛡️</span>
-                            <span>Doctor Approvals</span>
-                        </button>
-                    )}
                 </div>
             </div>
 
@@ -363,6 +510,20 @@ const DashboardPlaceholder = ({ roleTitle, initialTab = "overview" }) => {
                                     >
                                         {t("dashboard.manageAppointments")}
                                     </button>
+                                ) : currentRole === "ADMIN" ? (
+                                    <button
+                                        onClick={() => navigate("/admin/doctors")}
+                                        className="py-2.5 px-4 bg-amber-800 hover:bg-amber-900 text-white text-xs font-bold rounded-sm border border-amber-900 transition cursor-pointer"
+                                    >
+                                        🛡️ Review Doctor Approvals
+                                    </button>
+                                ) : currentRole === "PHARMACY" ? (
+                                    <button
+                                        onClick={() => setActiveTab("prescriptions")}
+                                        className="py-2.5 px-4 bg-[#212842] hover:bg-[#181E32] text-[#F0E7D5] text-xs font-bold rounded-sm border border-[#212842] transition cursor-pointer"
+                                    >
+                                        View Prescriptions
+                                    </button>
                                 ) : (
                                     <button
                                         onClick={handleOpenBookingModal}
@@ -376,41 +537,135 @@ const DashboardPlaceholder = ({ roleTitle, initialTab = "overview" }) => {
 
                         {/* Metric Cards Grid */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                            <div
-                                onClick={() =>
-                                    setActiveTab(
-                                        currentRole === "DOCTOR"
-                                            ? "doctor-appointments"
-                                            : "my-appointments"
-                                    )
-                                }
-                                className="bg-[#FAF6EE] border border-[#212842]/15 p-5 rounded-md hover:border-[#212842] transition cursor-pointer"
-                            >
-                                <span className="text-[10px] font-bold uppercase tracking-widest text-[#212842]/70 block mb-1">
-                                    {t("dashboard.metrics.appointmentSystem")}
-                                </span>
-                                <span className="text-xl font-serif font-bold text-[#212842] block">
-                                    {currentRole === "DOCTOR" ? t("dashboard.metrics.doctorSchedule") : t("dashboard.metrics.patientBookings")}
-                                </span>
-                                <span className="text-xs block text-[#212842]/60 mt-1 underline">
-                                    {t("dashboard.metrics.clickLiveAppointments")}
-                                </span>
-                            </div>
+                            {currentRole === "PATIENT" ? (
+                                <>
+                                    <div
+                                        onClick={() => setActiveTab("my-appointments")}
+                                        className="bg-[#FAF6EE] border border-[#212842]/15 p-5 rounded-md hover:border-[#212842] transition cursor-pointer"
+                                    >
+                                        <span className="text-[10px] font-bold uppercase tracking-widest text-[#212842]/70 block mb-1">
+                                            {t("dashboard.metrics.appointmentSystem")}
+                                        </span>
+                                        <span className="text-xl font-serif font-bold text-[#212842] block">
+                                            {t("dashboard.metrics.patientBookings")}
+                                        </span>
+                                        <span className="text-xs block text-[#212842]/60 mt-1 underline">
+                                            {t("dashboard.metrics.clickLiveAppointments")}
+                                        </span>
+                                    </div>
 
-                            <div
-                                onClick={() => setActiveTab("find-doctor")}
-                                className="bg-[#FAF6EE] border border-[#212842]/15 p-5 rounded-md hover:border-[#212842] transition cursor-pointer"
-                            >
-                                <span className="text-[10px] font-bold uppercase tracking-widest text-[#212842]/70 block mb-1">
-                                    {t("dashboard.metrics.verifiedClinicians")}
-                                </span>
-                                <span className="text-xl font-serif font-bold text-[#212842] block">
-                                    {t("dashboard.metrics.findDoctor")}
-                                </span>
-                                <span className="text-xs block text-[#212842]/60 mt-1 underline">
-                                    {t("dashboard.metrics.browseProfiles")}
-                                </span>
-                            </div>
+                                    <div
+                                        onClick={() => setActiveTab("find-doctor")}
+                                        className="bg-[#FAF6EE] border border-[#212842]/15 p-5 rounded-md hover:border-[#212842] transition cursor-pointer"
+                                    >
+                                        <span className="text-[10px] font-bold uppercase tracking-widest text-[#212842]/70 block mb-1">
+                                            {t("dashboard.metrics.verifiedClinicians")}
+                                        </span>
+                                        <span className="text-xl font-serif font-bold text-[#212842] block">
+                                            {t("dashboard.metrics.findDoctor")}
+                                        </span>
+                                        <span className="text-xs block text-[#212842]/60 mt-1 underline">
+                                            {t("dashboard.metrics.browseProfiles")}
+                                        </span>
+                                    </div>
+                                </>
+                            ) : currentRole === "DOCTOR" ? (
+                                <>
+                                    <div
+                                        onClick={() => setActiveTab("doctor-appointments")}
+                                        className="bg-[#FAF6EE] border border-[#212842]/15 p-5 rounded-md hover:border-[#212842] transition cursor-pointer"
+                                    >
+                                        <span className="text-[10px] font-bold uppercase tracking-widest text-[#212842]/70 block mb-1">
+                                            Clinical Schedule
+                                        </span>
+                                        <span className="text-xl font-serif font-bold text-[#212842] block">
+                                            Patient Appointments
+                                        </span>
+                                        <span className="text-xs block text-[#212842]/60 mt-1 underline">
+                                            Manage Consultations →
+                                        </span>
+                                    </div>
+
+                                    <div
+                                        onClick={() => setActiveTab("verification")}
+                                        className="bg-[#FAF6EE] border border-[#212842]/15 p-5 rounded-md hover:border-[#212842] transition cursor-pointer"
+                                    >
+                                        <span className="text-[10px] font-bold uppercase tracking-widest text-[#212842]/70 block mb-1">
+                                            Medical Credentials
+                                        </span>
+                                        <span className="text-xl font-serif font-bold text-[#212842] block">
+                                            Certificate Status
+                                        </span>
+                                        <span className="text-xs block text-[#212842]/60 mt-1 underline">
+                                            Verification Records →
+                                        </span>
+                                    </div>
+                                </>
+                            ) : currentRole === "ADMIN" ? (
+                                <>
+                                    <div
+                                        onClick={() => navigate("/admin/doctors")}
+                                        className="bg-[#FAF6EE] border border-[#212842]/15 p-5 rounded-md hover:border-[#212842] transition cursor-pointer"
+                                    >
+                                        <span className="text-[10px] font-bold uppercase tracking-widest text-[#212842]/70 block mb-1">
+                                            Practitioner Review
+                                        </span>
+                                        <span className="text-xl font-serif font-bold text-[#212842] block">
+                                            Doctor Approvals
+                                        </span>
+                                        <span className="text-xs block text-[#212842]/60 mt-1 underline">
+                                            Review Applications →
+                                        </span>
+                                    </div>
+
+                                    <div
+                                        onClick={() => setActiveTab("audit")}
+                                        className="bg-[#FAF6EE] border border-[#212842]/15 p-5 rounded-md hover:border-[#212842] transition cursor-pointer"
+                                    >
+                                        <span className="text-[10px] font-bold uppercase tracking-widest text-[#212842]/70 block mb-1">
+                                            Blockchain Ledger
+                                        </span>
+                                        <span className="text-xl font-serif font-bold text-[#212842] block">
+                                            System Integrity
+                                        </span>
+                                        <span className="text-xs block text-[#212842]/60 mt-1 underline">
+                                            Inspect Audit Trail →
+                                        </span>
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    <div
+                                        onClick={() => setActiveTab("prescriptions")}
+                                        className="bg-[#FAF6EE] border border-[#212842]/15 p-5 rounded-md hover:border-[#212842] transition cursor-pointer"
+                                    >
+                                        <span className="text-[10px] font-bold uppercase tracking-widest text-[#212842]/70 block mb-1">
+                                            Dispensary Queue
+                                        </span>
+                                        <span className="text-xl font-serif font-bold text-[#212842] block">
+                                            Digital Prescriptions
+                                        </span>
+                                        <span className="text-xs block text-[#212842]/60 mt-1 underline">
+                                            View Active Orders →
+                                        </span>
+                                    </div>
+
+                                    <div
+                                        onClick={() => setActiveTab("audit")}
+                                        className="bg-[#FAF6EE] border border-[#212842]/15 p-5 rounded-md hover:border-[#212842] transition cursor-pointer"
+                                    >
+                                        <span className="text-[10px] font-bold uppercase tracking-widest text-[#212842]/70 block mb-1">
+                                            Prescription Hash
+                                        </span>
+                                        <span className="text-xl font-serif font-bold text-[#212842] block">
+                                            Verify Integrity
+                                        </span>
+                                        <span className="text-xs block text-[#212842]/60 mt-1 underline">
+                                            Check Blockchain →
+                                        </span>
+                                    </div>
+                                </>
+                            )}
 
                             <div className="bg-[#FAF6EE] border border-[#212842]/15 p-5 rounded-md">
                                 <span className="text-[10px] font-bold uppercase tracking-widest text-[#212842]/70 block mb-1">
@@ -442,8 +697,63 @@ const DashboardPlaceholder = ({ roleTitle, initialTab = "overview" }) => {
                             <PatientAppointments onOpenBookModal={handleOpenBookingModal} />
                         ) : currentRole === "DOCTOR" ? (
                             <DoctorAppointments />
+                        ) : currentRole === "ADMIN" ? (
+                            <div className="bg-[#FAF6EE] border border-[#212842]/15 p-6 rounded-md space-y-4">
+                                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 border-b border-[#212842]/15 pb-4">
+                                    <div>
+                                        <h3 className="text-xl font-serif font-bold text-[#212842]">
+                                            Administrator Control & Verification Desk
+                                        </h3>
+                                        <p className="text-xs text-[#212842]/70 mt-1">
+                                            Manage clinical licenses, monitor immutable blockchain audit trails, and oversee emergency triage records.
+                                        </p>
+                                    </div>
+                                    <button
+                                        onClick={() => navigate("/admin/doctors")}
+                                        className="py-2 px-4 bg-amber-800 hover:bg-amber-900 text-white text-xs font-bold rounded-sm border border-amber-900 transition cursor-pointer"
+                                    >
+                                        🛡️ Doctor Verification Approvals
+                                    </button>
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+                                    <div
+                                        onClick={() => navigate("/admin/doctors")}
+                                        className="p-4 bg-[#F0E7D5]/60 border border-[#212842]/20 rounded-sm cursor-pointer hover:bg-[#F0E7D5] transition"
+                                    >
+                                        <div className="text-xs font-bold uppercase tracking-wider text-[#212842]/70">Doctor Verifications</div>
+                                        <div className="text-sm font-semibold text-[#212842] mt-1">Review License Applications →</div>
+                                    </div>
+                                    <div
+                                        onClick={() => setActiveTab("audit")}
+                                        className="p-4 bg-[#F0E7D5]/60 border border-[#212842]/20 rounded-sm cursor-pointer hover:bg-[#F0E7D5] transition"
+                                    >
+                                        <div className="text-xs font-bold uppercase tracking-wider text-[#212842]/70">Blockchain Integrity</div>
+                                        <div className="text-sm font-semibold text-[#212842] mt-1">Audit Ledger Trails →</div>
+                                    </div>
+                                    <div
+                                        onClick={() => setActiveTab("emergency")}
+                                        className="p-4 bg-[#F0E7D5]/60 border border-[#212842]/20 rounded-sm cursor-pointer hover:bg-[#F0E7D5] transition"
+                                    >
+                                        <div className="text-xs font-bold uppercase tracking-wider text-[#212842]/70">Emergency Triage</div>
+                                        <div className="text-sm font-semibold text-[#212842] mt-1">Inspect Emergency Access Logs →</div>
+                                    </div>
+                                </div>
+                            </div>
                         ) : (
-                            <PatientFindDoctors />
+                            <div className="bg-[#FAF6EE] border border-[#212842]/15 p-6 rounded-md space-y-4">
+                                <h3 className="text-xl font-serif font-bold text-[#212842]">
+                                    Pharmacy Dispensation Portal
+                                </h3>
+                                <p className="text-xs text-[#212842]/70">
+                                    Inspect and dispense blockchain-verified patient prescriptions.
+                                </p>
+                                <button
+                                    onClick={() => setActiveTab("prescriptions")}
+                                    className="py-2 px-4 bg-[#212842] text-[#F0E7D5] text-xs font-bold rounded-sm cursor-pointer"
+                                >
+                                    View Digital Prescriptions ({prescriptions.length})
+                                </button>
+                            </div>
                         )}
                     </div>
                 )}
@@ -499,21 +809,29 @@ const DashboardPlaceholder = ({ roleTitle, initialTab = "overview" }) => {
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-[#212842]/10">
-                                        {prescriptions.map((rx) => (
-                                            <tr key={rx.id} className="hover:bg-[#F0E7D5]/60">
-                                                <td className="py-3.5 px-3 font-mono font-bold">{rx.id}</td>
-                                                <td className="py-3.5 px-3 font-bold">{rx.patient}</td>
-                                                <td className="py-3.5 px-3 font-semibold">{rx.medication}</td>
-                                                <td className="py-3.5 px-3">{rx.dosage}</td>
-                                                <td className="py-3.5 px-3">{rx.doctor}</td>
-                                                <td className="py-3.5 px-3 font-mono">{rx.date}</td>
-                                                <td className="py-3.5 px-3">
-                                                    <span className="px-2.5 py-1 text-[10px] font-mono font-bold uppercase border border-[#212842] bg-[#F0E7D5] rounded-sm">
-                                                        {rx.status}
-                                                    </span>
+                                        {prescriptions.length === 0 ? (
+                                            <tr>
+                                                <td colSpan="7" className="py-8 text-center text-xs text-[#212842]/60 font-sans italic">
+                                                    No digital prescriptions on record.
                                                 </td>
                                             </tr>
-                                        ))}
+                                        ) : (
+                                            prescriptions.map((rx) => (
+                                                <tr key={rx.id} className="hover:bg-[#F0E7D5]/60">
+                                                    <td className="py-3.5 px-3 font-mono font-bold">{rx.id}</td>
+                                                    <td className="py-3.5 px-3 font-bold">{rx.patient}</td>
+                                                    <td className="py-3.5 px-3 font-semibold">{rx.medication}</td>
+                                                    <td className="py-3.5 px-3">{rx.dosage}</td>
+                                                    <td className="py-3.5 px-3">{rx.doctor}</td>
+                                                    <td className="py-3.5 px-3 font-mono">{rx.date}</td>
+                                                    <td className="py-3.5 px-3">
+                                                        <span className="px-2.5 py-1 text-[10px] font-mono font-bold uppercase border border-[#212842] bg-[#F0E7D5] rounded-sm">
+                                                            {rx.status}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
                                     </tbody>
                                 </table>
                             </div>
@@ -533,42 +851,51 @@ const DashboardPlaceholder = ({ roleTitle, initialTab = "overview" }) => {
                             </p>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            {medicalRecords.map((rec) => (
-                                <div
-                                    key={rec.id}
-                                    className="bg-[#FAF6EE] border border-[#212842]/15 p-5 rounded-md flex flex-col justify-between space-y-4"
-                                >
-                                    <div>
-                                        <div className="flex items-center justify-between border-b border-[#212842]/15 pb-2 mb-3">
-                                            <span className="font-mono text-xs font-bold text-[#212842]">
-                                                {rec.id}
-                                            </span>
-                                            <span className="text-[10px] font-mono text-[#212842]/60">
-                                                {rec.date}
-                                            </span>
+                        {medicalRecords.length === 0 ? (
+                            <div className="bg-[#FAF6EE] border border-[#212842]/15 rounded-md p-8 text-center">
+                                <p className="text-sm font-serif font-bold text-[#212842]">No Encrypted Medical Records Found</p>
+                                <p className="text-xs text-[#212842]/60 mt-1 max-w-md mx-auto">
+                                    Diagnostic reports, MRI/CT scans, and clinical assessments will appear here once securely uploaded by your healthcare provider.
+                                </p>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                {medicalRecords.map((rec) => (
+                                    <div
+                                        key={rec.id}
+                                        className="bg-[#FAF6EE] border border-[#212842]/15 p-5 rounded-md flex flex-col justify-between space-y-4"
+                                    >
+                                        <div>
+                                            <div className="flex items-center justify-between border-b border-[#212842]/15 pb-2 mb-3">
+                                                <span className="font-mono text-xs font-bold text-[#212842]">
+                                                    {rec.id}
+                                                </span>
+                                                <span className="text-[10px] font-mono text-[#212842]/60">
+                                                    {rec.date}
+                                                </span>
+                                            </div>
+                                            <h4 className="font-bold text-sm text-[#212842] mb-1">{rec.type}</h4>
+                                            <p className="text-xs text-[#212842]/70 mb-2">
+                                                Patient: <strong>{rec.patient}</strong>
+                                            </p>
+                                            <p className="text-xs text-[#212842]/80 leading-relaxed border-t border-[#212842]/10 pt-2">
+                                                {rec.summary}
+                                            </p>
                                         </div>
-                                        <h4 className="font-bold text-sm text-[#212842] mb-1">{rec.type}</h4>
-                                        <p className="text-xs text-[#212842]/70 mb-2">
-                                            Patient: <strong>{rec.patient}</strong>
-                                        </p>
-                                        <p className="text-xs text-[#212842]/80 leading-relaxed border-t border-[#212842]/10 pt-2">
-                                            {rec.summary}
-                                        </p>
-                                    </div>
 
-                                    <div className="pt-2 border-t border-[#212842]/15 flex items-center justify-between text-xs">
-                                        <span className="text-[11px] text-[#212842]/70">{rec.doctor}</span>
-                                        <button
-                                            onClick={() => setSelectedRecord(rec)}
-                                            className="px-3 py-1 bg-[#212842] text-[#F0E7D5] font-bold text-[10px] uppercase rounded-sm cursor-pointer"
-                                        >
-                                            View Report
-                                        </button>
+                                        <div className="pt-2 border-t border-[#212842]/15 flex items-center justify-between text-xs">
+                                            <span className="text-[11px] text-[#212842]/70">{rec.doctor}</span>
+                                            <button
+                                                onClick={() => setSelectedRecord(rec)}
+                                                className="px-3 py-1 bg-[#212842] text-[#F0E7D5] font-bold text-[10px] uppercase rounded-sm cursor-pointer"
+                                            >
+                                                View Report
+                                            </button>
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
-                        </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 )}
 
@@ -597,21 +924,29 @@ const DashboardPlaceholder = ({ roleTitle, initialTab = "overview" }) => {
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-[#212842]/10 font-mono">
-                                        {auditLogs.map((log, idx) => (
-                                            <tr key={idx} className="hover:bg-[#F0E7D5]/60">
-                                                <td className="py-3.5 px-3 font-bold">{log.hash}</td>
-                                                <td className="py-3.5 px-3 font-sans font-semibold">
-                                                    {log.action}
-                                                </td>
-                                                <td className="py-3.5 px-3 font-sans">{log.user}</td>
-                                                <td className="py-3.5 px-3 text-[11px]">{log.timestamp}</td>
-                                                <td className="py-3.5 px-3">
-                                                    <span className="px-2 py-0.5 text-[10px] font-bold uppercase border border-[#212842] bg-[#212842] text-[#F0E7D5] rounded-sm">
-                                                        BLOCK_VERIFIED
-                                                    </span>
+                                        {auditLogs.length === 0 ? (
+                                            <tr>
+                                                <td colSpan="5" className="py-8 text-center text-xs text-[#212842]/60 font-sans italic">
+                                                    No blockchain audit trail transactions recorded yet.
                                                 </td>
                                             </tr>
-                                        ))}
+                                        ) : (
+                                            auditLogs.map((log, idx) => (
+                                                <tr key={idx} className="hover:bg-[#F0E7D5]/60">
+                                                    <td className="py-3.5 px-3 font-bold">{log.hash}</td>
+                                                    <td className="py-3.5 px-3 font-sans font-semibold">
+                                                        {log.action}
+                                                    </td>
+                                                    <td className="py-3.5 px-3 font-sans">{log.user}</td>
+                                                    <td className="py-3.5 px-3 text-[11px]">{log.timestamp}</td>
+                                                    <td className="py-3.5 px-3">
+                                                        <span className="px-2 py-0.5 text-[10px] font-bold uppercase border border-[#212842] bg-[#212842] text-[#F0E7D5] rounded-sm">
+                                                            BLOCK_VERIFIED
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
                                     </tbody>
                                 </table>
                             </div>

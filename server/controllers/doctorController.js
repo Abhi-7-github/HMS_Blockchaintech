@@ -30,6 +30,7 @@ const createProfile = async (req, res) => {
             consultationFee,
             languages,
             consultationMode,
+            availableTimings,
         } = req.body;
 
         // 2. Validate required fields
@@ -67,6 +68,7 @@ const createProfile = async (req, res) => {
             consultationFee: Number(consultationFee),
             languages: Array.isArray(languages) && languages.length > 0 ? languages : ["English"],
             consultationMode: consultationMode ? consultationMode.toUpperCase().trim() : "BOTH",
+            availableTimings: availableTimings ? availableTimings.trim() : "09:00 AM - 05:00 PM (Mon - Sat)",
             verificationStatus: "PENDING", // Strictly set by system
             verifiedBy: null,
             verifiedAt: null,
@@ -160,6 +162,11 @@ const updateProfile = async (req, res) => {
             consultationFee,
             languages,
             consultationMode,
+            availableTimings,
+            availableDays,
+            dailyStartTime,
+            dailyEndTime,
+            slotDuration,
         } = req.body;
 
         // Check registrationNumber uniqueness if updated
@@ -181,6 +188,11 @@ const updateProfile = async (req, res) => {
         if (consultationFee !== undefined) profile.consultationFee = Number(consultationFee);
         if (Array.isArray(languages)) profile.languages = languages;
         if (consultationMode) profile.consultationMode = consultationMode.toUpperCase().trim();
+        if (availableTimings !== undefined) profile.availableTimings = availableTimings.trim();
+        if (Array.isArray(availableDays)) profile.availableDays = availableDays;
+        if (dailyStartTime !== undefined) profile.dailyStartTime = dailyStartTime.trim();
+        if (dailyEndTime !== undefined) profile.dailyEndTime = dailyEndTime.trim();
+        if (slotDuration !== undefined) profile.slotDuration = Number(slotDuration);
 
         // Requirement 6: Doctor cannot modify verificationStatus, verifiedBy, verifiedAt, rejectionReason
         // These fields are intentionally left untouched on profile update.

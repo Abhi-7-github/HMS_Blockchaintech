@@ -374,6 +374,13 @@ const AdminDoctorVerification = () => {
                                     {Array.isArray(doctorData?.languages) ? doctorData?.languages.join(", ") : doctorData?.languages}
                                 </span>
                             </div>
+
+                            <div className="p-3 border border-[#212842]/15 bg-[#F0E7D5] sm:col-span-2">
+                                <span className="block text-[10px] font-bold uppercase text-[#212842]/70">Consultation Timings / Working Hours</span>
+                                <span className="font-bold text-xs text-[#212842]">
+                                    {doctorData?.availableTimings || "09:00 AM - 05:00 PM (Mon - Sat)"}
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>

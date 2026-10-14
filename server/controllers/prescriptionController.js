@@ -302,7 +302,7 @@ const getPrescriptionById = async (req, res) => {
                     message: "Access denied. You are not authorized to view this prescription.",
                 });
             }
-        } else if (req.user.role !== "ADMIN") {
+        } else if (req.user.role !== "ADMIN" && req.user.role !== "PHARMACY") {
             return res.status(403).json({
                 success: false,
                 message: "Access denied. Role not authorized to view prescriptions.",
@@ -374,7 +374,7 @@ const verifyPrescriptionIntegrity = async (req, res) => {
                     message: "Access denied. You are not authorized to verify this prescription.",
                 });
             }
-        } else if (req.user.role !== "ADMIN") {
+        } else if (req.user.role !== "ADMIN" && req.user.role !== "PHARMACY") {
             return res.status(403).json({
                 status: "INVALID / MODIFIED",
                 success: false,

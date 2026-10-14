@@ -51,9 +51,10 @@ const protect = async (req, res, next) => {
 
 /**
  * Flexible Role-based Authorization Middleware
- * Usage: authorize("ADMIN", "DOCTOR")
+ * Usage: authorize("ADMIN", "DOCTOR") or authorize(["ADMIN", "DOCTOR"])
  */
 const authorize = (...roles) => {
+    const flatRoles = roles.flat().map((r) => String(r).toUpperCase().trim());
     return (req, res, next) => {
         if (!req.user) {
             return res.status(401).json({
@@ -62,10 +63,12 @@ const authorize = (...roles) => {
             });
         }
 
-        if (!roles.includes(req.user.role)) {
+        const userRole = (req.user.role || "").toUpperCase().trim();
+
+        if (!flatRoles.includes(userRole)) {
             return res.status(403).json({
                 success: false,
-                message: `Access denied. Role '${req.user.role}' is not authorized to access this resource. Required role(s): ${roles.join(", ")}`,
+                message: `Access denied. Role '${req.user.role}' is not authorized to access this resource. Required role(s): ${flatRoles.join(", ")}`,
             });
         }
 

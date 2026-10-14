@@ -170,6 +170,7 @@ const getDoctorDetailsById = async (req, res) => {
                     consultationFee: doctor.consultationFee,
                     languages: doctor.languages,
                     consultationMode: doctor.consultationMode,
+                    availableTimings: doctor.availableTimings,
                     verificationStatus: doctor.verificationStatus,
                     submittedDate: doctor.createdAt,
                 },

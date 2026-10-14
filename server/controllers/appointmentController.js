@@ -628,15 +628,16 @@ const getConsultationRoomAccess = async (req, res) => {
             appointmentId: appointment._id,
             status: appointment.status,
             userRole: userRoleInRoom,
+            currentUserId: currentUserId.toString(),
             patient: {
                 id: appointment.patientId._id,
-                userId: patientUserId,
+                userId: patientUserId ? patientUserId.toString() : "",
                 name: appointment.patientId.userId?.name || "Patient",
                 email: appointment.patientId.userId?.email || "",
             },
             doctor: {
                 id: appointment.doctorId._id,
-                userId: doctorUserId,
+                userId: doctorUserId ? doctorUserId.toString() : "",
                 name: appointment.doctorId.userId?.name || "Doctor",
                 specialization: appointment.doctorId.specialization,
                 hospital: appointment.doctorId.hospital,
@@ -652,6 +653,7 @@ const getConsultationRoomAccess = async (req, res) => {
                 iceServers: [
                     { urls: "stun:stun.l.google.com:19302" },
                     { urls: "stun:stun1.l.google.com:19302" },
+                    { urls: "stun:stun2.l.google.com:19302" },
                 ],
             },
         };
@@ -705,26 +707,136 @@ const handleConsultationSignaling = async (req, res) => {
 
         if (type === "chat") {
             const chatMsg = {
-                id: `msg-${Date.now()}`,
+                id: `msg-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
                 sender: currentUserId.equals(doctorUserId) ? "doctor" : "patient",
-                senderName: req.user.name || "User",
-                text: payload.text,
+                senderName: req.user.name || (currentUserId.equals(doctorUserId) ? "Doctor" : "Patient"),
+                text: payload?.text || "",
                 timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
             };
-            signals.push({ type: "chat", data: chatMsg });
+            signals.push({ type: "chat", data: chatMsg, from: currentUserId.toString(), timestamp: Date.now() });
             return res.status(200).json({ success: true, message: "Chat sent.", data: chatMsg });
         }
 
         if (type === "get-signals") {
             const chatMessages = signals.filter((s) => s.type === "chat").map((s) => s.data);
-            return res.status(200).json({ success: true, signals, chatMessages });
+            return res.status(200).json({
+                success: true,
+                signals,
+                chatMessages,
+                currentUserId: currentUserId.toString(),
+                currentUserRole: currentUserId.equals(doctorUserId) ? "DOCTOR" : "PATIENT",
+            });
         }
 
-        signals.push({ type, payload, from: currentUserId });
-        return res.status(200).json({ success: true, message: "Signal registered." });
+        if (type === "clear-signals") {
+            const chatOnly = signals.filter((s) => s.type === "chat");
+            consultationSignals.set(roomId, chatOnly);
+            return res.status(200).json({ success: true, message: "WebRTC signals cleared." });
+        }
+
+        const newSignal = {
+            id: `sig-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`,
+            type,
+            payload,
+            from: currentUserId.toString(),
+            fromRole: currentUserId.equals(doctorUserId) ? "DOCTOR" : "PATIENT",
+            timestamp: Date.now(),
+        };
+
+        signals.push(newSignal);
+
+        // Limit buffer size to avoid unbounded memory usage
+        if (signals.length > 250) {
+            consultationSignals.set(roomId, signals.slice(signals.length - 250));
+        }
+
+        return res.status(200).json({ success: true, message: "Signal registered.", signalId: newSignal.id });
     } catch (error) {
         console.error("Signaling error:", error.message);
         return res.status(500).json({ success: false, message: "Signaling error" });
+    }
+};
+
+/**
+ * @desc    Reschedule or adjust appointment date and times (Doctor, Patient, Admin)
+ * @route   PATCH /api/appointments/:id/reschedule
+ * @access  Private (Doctor, Patient, Admin)
+ */
+const rescheduleAppointment = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { appointmentDate, startTime, endTime } = req.body;
+
+        if (!appointmentDate || !startTime || !endTime) {
+            return res.status(400).json({
+                success: false,
+                message: "Please provide appointmentDate, startTime, and endTime.",
+            });
+        }
+
+        const appointment = await Appointment.findById(id);
+        if (!appointment) {
+            return res.status(404).json({
+                success: false,
+                message: "Appointment not found.",
+            });
+        }
+
+        let isAuthorized = false;
+        if (req.user.role === "DOCTOR") {
+            const doctorProfile = await Doctor.findOne({ userId: req.user._id });
+            if (doctorProfile && appointment.doctorId.equals(doctorProfile._id)) {
+                isAuthorized = true;
+            }
+        } else if (req.user.role === "PATIENT") {
+            const patientProfile = await Patient.findOne({ userId: req.user._id });
+            if (patientProfile && appointment.patientId.equals(patientProfile._id)) {
+                isAuthorized = true;
+            }
+        } else if (req.user.role === "ADMIN") {
+            isAuthorized = true;
+        }
+
+        if (!isAuthorized) {
+            return res.status(403).json({
+                success: false,
+                message: "Access denied. You can only adjust schedule for your own appointments.",
+            });
+        }
+
+        appointment.appointmentDate = appointmentDate;
+        appointment.startTime = startTime.trim();
+        appointment.endTime = endTime.trim();
+        await appointment.save();
+
+        const updatedAppointment = await Appointment.findById(appointment._id)
+            .populate({
+                path: "patientId",
+                populate: { path: "userId", select: "name email phone" },
+            })
+            .populate({
+                path: "doctorId",
+                select: "specialization qualification hospital consultationFee consultationMode availableTimings",
+                populate: { path: "userId", select: "name email phone" },
+            });
+
+        return res.status(200).json({
+            success: true,
+            message: "Appointment schedule updated successfully.",
+            data: updatedAppointment,
+        });
+    } catch (error) {
+        console.error("Error rescheduling appointment:", error.message);
+        if (error.name === "ValidationError") {
+            return res.status(400).json({
+                success: false,
+                message: Object.values(error.errors).map((e) => e.message).join(". "),
+            });
+        }
+        return res.status(500).json({
+            success: false,
+            message: error.message || "Server error while rescheduling appointment.",
+        });
     }
 };
 
@@ -737,6 +849,7 @@ module.exports = {
     rejectAppointment,
     cancelAppointment,
     completeAppointment,
+    rescheduleAppointment,
     getConsultationRoomAccess,
     handleConsultationSignaling,
 };

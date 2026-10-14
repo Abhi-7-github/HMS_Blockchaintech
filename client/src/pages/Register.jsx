@@ -29,11 +29,12 @@ const Register = () => {
         specialization: "Cardiology",
         qualification: "MBBS, MD",
         registrationNumber: "",
-        experience: "5",
-        hospital: "Central General Hospital",
-        consultationFee: "100",
+        experience: "",
+        hospital: "",
+        consultationFee: "",
         consultationMode: "BOTH",
         languages: "English",
+        availableTimings: "09:00 AM - 05:00 PM (Mon - Sat)",
         certificateType: "MEDICAL_REGISTRATION",
     });
 
@@ -538,6 +539,20 @@ const Register = () => {
                                                     className="w-full px-3 py-1.5 bg-[#FAF6EE] border border-[#212842]/30 rounded-sm text-[#212842]"
                                                 />
                                             </div>
+                                        </div>
+
+                                        <div>
+                                            <label className="block font-bold text-[#212842] uppercase tracking-wider mb-0.5">
+                                                Consultation Timings / Working Hours
+                                            </label>
+                                            <input
+                                                type="text"
+                                                name="availableTimings"
+                                                value={doctorFields.availableTimings}
+                                                onChange={handleDoctorFieldChange}
+                                                placeholder="e.g. 09:00 AM - 05:00 PM (Mon - Sat)"
+                                                className="w-full px-3 py-1.5 bg-[#FAF6EE] border border-[#212842]/30 rounded-sm text-[#212842]"
+                                            />
                                         </div>
 
                                         {/* Certificate File Attachment Input */}

@@ -102,6 +102,22 @@ export const logout = () => {
     removeToken();
 };
 
+/**
+ * Request password reset OTP for 3 roles (PATIENT, DOCTOR, PHARMACY)
+ * @param {Object} data - { email, role }
+ */
+export const forgotPassword = async (data) => {
+    return await api.post("/auth/forgot-password", data);
+};
+
+/**
+ * Verify OTP and reset password
+ * @param {Object} data - { email, role, otp, newPassword }
+ */
+export const resetPassword = async (data) => {
+    return await api.post("/auth/reset-password", data);
+};
+
 // 6. Doctor Profile & Certificate Services
 
 /**
@@ -278,6 +294,24 @@ export const completeAppointment = async (id) => {
     return await api.patch(`/appointments/${id}/complete`);
 };
 
+/**
+ * Reschedule / adjust appointment date and times (Doctor or Patient)
+ * @param {string} id - Appointment ObjectId
+ * @param {Object} scheduleData - { appointmentDate, startTime, endTime }
+ */
+export const rescheduleAppointment = async (id, scheduleData) => {
+    return await api.patch(`/appointments/${id}/reschedule`, scheduleData);
+};
+
+
+/**
+ * Update authenticated doctor's profile & appointment timings/schedule
+ * @param {Object} profileData
+ */
+export const updateDoctorProfile = async (profileData) => {
+    return await api.put("/doctor/profile", profileData);
+};
+
 // 9. Digital Prescription API Functions
 
 /**
@@ -407,6 +441,30 @@ export const getConsultationSignals = async (appointmentId) => {
  */
 export const getRuralWellnessData = async () => {
     return await api.get("/rural/wellness");
+};
+
+// 15. Medical Records API Functions
+/**
+ * Fetch medical records for authenticated patient/doctor
+ */
+export const getMedicalRecords = async () => {
+    return await api.get("/records");
+};
+
+/**
+ * Fetch single medical record by ID
+ * @param {string} id
+ */
+export const getMedicalRecordById = async (id) => {
+    return await api.get(`/records/${id}`);
+};
+
+/**
+ * Verify medical record integrity on-chain
+ * @param {string} id
+ */
+export const verifyMedicalRecordIntegrity = async (id) => {
+    return await api.get(`/records/${id}/verify`);
 };
 
 export default api;

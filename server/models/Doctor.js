@@ -52,6 +52,27 @@ const doctorSchema = new mongoose.Schema(
             },
             default: "BOTH",
         },
+        availableTimings: {
+            type: String,
+            trim: true,
+            default: "09:00 AM - 05:00 PM (Mon - Sat)",
+        },
+        availableDays: {
+            type: [String],
+            default: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+        },
+        dailyStartTime: {
+            type: String,
+            default: "09:00",
+        },
+        dailyEndTime: {
+            type: String,
+            default: "17:00",
+        },
+        slotDuration: {
+            type: Number,
+            default: 30, // in minutes
+        },
         verificationStatus: {
             type: String,
             uppercase: true,

@@ -133,21 +133,31 @@ const BookAppointmentModal = ({ doctor, verifiedDoctors = [], onClose, onSuccess
                                 <div className="text-[11px] text-[#212842]/70">
                                     {doctor.specialization} • {doctor.hospital} (Fee: ₹{doctor.consultationFee})
                                 </div>
+                                <div className="text-[11px] text-[#212842] mt-1 font-mono">
+                                    🕒 Working Hours: <strong>{doctor.availableTimings || "09:00 AM - 05:00 PM (Mon - Sat)"}</strong>
+                                </div>
                             </div>
                         ) : (
-                            <select
-                                value={selectedDoctor?._id || ""}
-                                onChange={handleDoctorChange}
-                                className="w-full p-2.5 bg-[#F0E7D5] border border-[#212842]/30 rounded-sm text-[#212842] font-semibold focus:outline-none focus:border-[#212842]"
-                                required
-                            >
-                                <option value="" disabled>Select Verified Doctor...</option>
-                                {verifiedDoctors.map((doc) => (
-                                    <option key={doc._id} value={doc._id}>
-                                        {doc.userId?.name} ({doc.specialization} - {doc.hospital})
-                                    </option>
-                                ))}
-                            </select>
+                            <div className="space-y-2">
+                                <select
+                                    value={selectedDoctor?._id || ""}
+                                    onChange={handleDoctorChange}
+                                    className="w-full p-2.5 bg-[#F0E7D5] border border-[#212842]/30 rounded-sm text-[#212842] font-semibold focus:outline-none focus:border-[#212842]"
+                                    required
+                                >
+                                    <option value="" disabled>Select Verified Doctor...</option>
+                                    {verifiedDoctors.map((doc) => (
+                                        <option key={doc._id} value={doc._id}>
+                                            {doc.userId?.name} ({doc.specialization} - {doc.hospital})
+                                        </option>
+                                    ))}
+                                </select>
+                                {selectedDoctor && (
+                                    <div className="p-2 bg-[#F0E7D5] border border-[#212842]/15 rounded-sm text-[11px] text-[#212842] font-mono">
+                                        🕒 Working Hours: <strong>{selectedDoctor.availableTimings || "09:00 AM - 05:00 PM (Mon - Sat)"}</strong> (Fee: ₹{selectedDoctor.consultationFee})
+                                    </div>
+                                )}
+                            </div>
                         )}
                     </div>
 
@@ -192,6 +202,37 @@ const BookAppointmentModal = ({ doctor, verifiedDoctors = [], onClose, onSuccess
                                 className="w-full p-2.5 bg-[#F0E7D5] border border-[#212842]/30 rounded-sm text-[#212842] font-mono focus:outline-none focus:border-[#212842]"
                                 required
                             />
+                        </div>
+                    </div>
+
+                    {/* Quick Consultation Slot Selector */}
+                    <div>
+                        <span className="block font-bold uppercase tracking-wider text-[10px] text-[#212842]/70 mb-1.5">
+                            Suggested Time Slots
+                        </span>
+                        <div className="grid grid-cols-4 gap-1.5">
+                            {[
+                                { start: "09:30", end: "10:00", label: "09:30 AM" },
+                                { start: "11:00", end: "11:30", label: "11:00 AM" },
+                                { start: "14:00", end: "14:30", label: "02:00 PM" },
+                                { start: "16:00", end: "16:30", label: "04:00 PM" },
+                            ].map((slot) => {
+                                const isSelected = form.startTime === slot.start && form.endTime === slot.end;
+                                return (
+                                    <button
+                                        key={slot.start}
+                                        type="button"
+                                        onClick={() => setForm((prev) => ({ ...prev, startTime: slot.start, endTime: slot.end }))}
+                                        className={`py-1.5 px-1 text-[10px] font-mono font-bold rounded-sm border transition text-center cursor-pointer ${
+                                            isSelected
+                                                ? "bg-[#212842] text-[#F0E7D5] border-[#212842]"
+                                                : "bg-[#F0E7D5] text-[#212842] border-[#212842]/30 hover:bg-[#E2D7C2]"
+                                        }`}
+                                    >
+                                        {slot.label}
+                                    </button>
+                                );
+                            })}
                         </div>
                     </div>
 

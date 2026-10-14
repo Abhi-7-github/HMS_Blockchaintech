@@ -9,6 +9,7 @@ const {
     rejectAppointment,
     cancelAppointment,
     completeAppointment,
+    rescheduleAppointment,
     getConsultationRoomAccess,
     handleConsultationSignaling,
 } = require("../controllers/appointmentController");
@@ -68,5 +69,10 @@ router.patch("/:id/cancel", authorize("PATIENT", "DOCTOR", "ADMIN"), cancelAppoi
 // @desc    Mark appointment as completed (Doctor only)
 // @access  Private (Doctor)
 router.patch("/:id/complete", isDoctor, completeAppointment);
+
+// @route   PATCH /api/appointments/:id/reschedule
+// @desc    Reschedule / adjust appointment date and time (Doctor or Patient)
+// @access  Private (Patient, Doctor, Admin)
+router.patch("/:id/reschedule", authorize("PATIENT", "DOCTOR", "ADMIN"), rescheduleAppointment);
 
 module.exports = router;

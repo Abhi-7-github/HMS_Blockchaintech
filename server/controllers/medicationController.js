@@ -38,12 +38,19 @@ const getTimeSlotsForFrequency = (freqString = "") => {
 const getTodaySchedule = async (req, res) => {
     try {
         const userId = req.user._id;
-        const patientProfile = await Patient.findOne({ userId });
+        let patientProfile = await Patient.findOne({ userId });
 
         if (!patientProfile) {
-            return res.status(404).json({
-                success: false,
-                message: "Patient profile not found.",
+            patientProfile = await Patient.create({
+                userId,
+                dateOfBirth: new Date("2000-01-01"),
+                gender: "PREFER_NOT_TO_SAY",
+                address: "Primary Residence",
+                emergencyContact: {
+                    name: req.user.name || "Primary Contact",
+                    relationship: "Self/Family",
+                    phone: req.user.phone || "0000000000",
+                },
             });
         }
 

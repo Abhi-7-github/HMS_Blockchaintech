@@ -1,7 +1,8 @@
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
+const Patient = require("../models/Patient");
 const Otp = require("../models/Otp");
-const { sendOTP } = require("../utils/sendEmail");
+const { sendOTP, sendPasswordResetOTP } = require("../utils/sendEmail");
 const crypto = require("crypto");
 
 /**
@@ -177,6 +178,24 @@ const verifyOtp = async (req, res) => {
         // Mark user as verified
         user.isVerified = true;
         await user.save();
+
+        // Auto-create baseline Patient profile for new verified PATIENT
+        if (user.role === "PATIENT") {
+            const existingPatient = await Patient.findOne({ userId: user._id });
+            if (!existingPatient) {
+                await Patient.create({
+                    userId: user._id,
+                    dateOfBirth: new Date("2000-01-01"),
+                    gender: "PREFER_NOT_TO_SAY",
+                    address: "Primary Residence",
+                    emergencyContact: {
+                        name: user.name || "Primary Contact",
+                        relationship: "Self/Family",
+                        phone: user.phone || "0000000000",
+                    },
+                });
+            }
+        }
 
         // Delete used OTP
         await Otp.deleteMany({ email: normalizedEmail });
@@ -354,10 +373,149 @@ const getMe = async (req, res) => {
     }
 };
 
+/**
+ * @desc    Request password reset OTP for 3 roles (PATIENT, DOCTOR, PHARMACY)
+ * @route   POST /api/auth/forgot-password
+ * @access  Public
+ */
+const forgotPassword = async (req, res) => {
+    try {
+        const { email, role } = req.body;
+
+        if (!email || !role) {
+            return res.status(400).json({
+                success: false,
+                message: "Please provide both email address and role (PATIENT, DOCTOR, or PHARMACY)",
+            });
+        }
+
+        const normalizedEmail = email.toLowerCase().trim();
+        const formattedRole = role.toUpperCase().trim();
+
+        const allowedRoles = ["PATIENT", "DOCTOR", "PHARMACY"];
+        if (!allowedRoles.includes(formattedRole)) {
+            return res.status(400).json({
+                success: false,
+                message: `Invalid role '${role}'. Password reset is available for: ${allowedRoles.join(", ")}`,
+            });
+        }
+
+        const user = await User.findOne({ email: normalizedEmail, role: formattedRole });
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: `No ${formattedRole} account found with email '${normalizedEmail}'. Please verify your selected role and email.`,
+            });
+        }
+
+        // Generate 6-digit OTP
+        const otpCode = generateOTP();
+
+        // Clear any previous active OTPs for this email
+        await Otp.deleteMany({ email: normalizedEmail });
+
+        // Save new OTP
+        await Otp.create({
+            email: normalizedEmail,
+            otp: otpCode,
+        });
+
+        // Send OTP email
+        await sendPasswordResetOTP(normalizedEmail, otpCode, formattedRole);
+
+        return res.status(200).json({
+            success: true,
+            message: `Password reset OTP has been sent to ${normalizedEmail} for your ${formattedRole} account.`,
+        });
+    } catch (error) {
+        console.error("Error in forgotPassword:", error.message);
+        return res.status(500).json({
+            success: false,
+            message: "Failed to send password reset OTP. Please try again.",
+            error: error.message,
+        });
+    }
+};
+
+/**
+ * @desc    Verify OTP and reset password for user
+ * @route   POST /api/auth/reset-password
+ * @access  Public
+ */
+const resetPassword = async (req, res) => {
+    try {
+        const { email, role, otp, newPassword } = req.body;
+
+        if (!email || !role || !otp || !newPassword) {
+            return res.status(400).json({
+                success: false,
+                message: "Please provide email, role, OTP code, and new password",
+            });
+        }
+
+        const normalizedEmail = email.toLowerCase().trim();
+        const formattedRole = role.toUpperCase().trim();
+
+        // Password length check
+        const minLength = parseInt(process.env.PASSWORD_MIN_LENGTH || "6", 10);
+        if (newPassword.length < minLength) {
+            return res.status(400).json({
+                success: false,
+                message: `New password must be at least ${minLength} characters long`,
+            });
+        }
+
+        const user = await User.findOne({ email: normalizedEmail, role: formattedRole });
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: `No ${formattedRole} account found with email '${normalizedEmail}'.`,
+            });
+        }
+
+        // Verify OTP
+        const otpRecord = await Otp.findOne({
+            email: normalizedEmail,
+            otp: otp.trim(),
+        });
+
+        if (!otpRecord) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid or expired OTP code. Please request a new OTP.",
+            });
+        }
+
+        // Update password (pre-save hook will hash it with bcrypt)
+        user.password = newPassword;
+        if (!user.isVerified) {
+            user.isVerified = true;
+        }
+        await user.save();
+
+        // Delete used OTP
+        await Otp.deleteMany({ email: normalizedEmail });
+
+        return res.status(200).json({
+            success: true,
+            message: `Password reset successfully for your ${formattedRole} account. You may now sign in with your new password.`,
+        });
+    } catch (error) {
+        console.error("Error in resetPassword:", error.message);
+        return res.status(500).json({
+            success: false,
+            message: "Failed to reset password. Please try again.",
+            error: error.message,
+        });
+    }
+};
+
 module.exports = {
     register,
     verifyOtp,
     resendOtp,
     login,
     getMe,
+    forgotPassword,
+    resetPassword,
 };

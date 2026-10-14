@@ -245,6 +245,12 @@ const PatientFindDoctors = () => {
                                                 {doc.consultationMode}
                                             </span>
                                         </div>
+                                        <div className="flex justify-between items-start pt-1 border-t border-[#212842]/10">
+                                            <span className="font-semibold text-[#212842]/60">Timings:</span>
+                                            <span className="font-bold text-[#212842] text-[11px] text-right">
+                                                🕒 {doc.availableTimings || "09:00 AM - 05:00 PM (Mon - Sat)"}
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
 

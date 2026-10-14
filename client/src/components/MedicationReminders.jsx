@@ -21,7 +21,13 @@ const MedicationReminders = () => {
     const [actionLoadingId, setActionLoadingId] = useState(null);
     const [error, setError] = useState(null);
 
+    const userRole = (localStorage.getItem("role") || "").toUpperCase();
+
     const fetchData = async () => {
+        if (userRole && userRole !== "PATIENT") {
+            setIsLoading(false);
+            return;
+        }
         setIsLoading(true);
         setError(null);
         try {
@@ -94,6 +100,18 @@ const MedicationReminders = () => {
                     <div className="w-5 h-5 border-2 border-[#212842] border-t-transparent animate-spin rounded-full"></div>
                     <span>Generating today's medication schedule from digital prescriptions...</span>
                 </div>
+            </div>
+        );
+    }
+
+    if (userRole && userRole !== "PATIENT") {
+        return (
+            <div className="bg-[#FAF6EE] border border-[#212842]/15 p-8 rounded-md text-center text-[#212842] space-y-3">
+                <span className="text-3xl block">💊</span>
+                <h3 className="text-lg font-serif font-bold">Patient Medication Reminders</h3>
+                <p className="text-xs text-[#212842]/70 max-w-md mx-auto">
+                    Medication schedules and adherence tracking are personal patient records. As a healthcare provider or administrator ({userRole}), please navigate to Digital Medical Prescriptions or Patient Medical Records to review treatments.
+                </p>
             </div>
         );
     }

@@ -1,7 +1,7 @@
 const Patient = require("../models/Patient");
 const User = require("../models/User");
 const EmergencyAccessLog = require("../models/EmergencyAccessLog");
-const { grantRecordAccessOnChain } = require("../blockchain/contractService");
+const { grantRecordAccessOnChain } = require("../blockchain/blockchainService");
 const mongoose = require("mongoose");
 
 /**
@@ -12,13 +12,21 @@ const mongoose = require("mongoose");
 const getPatientEmergencyProfile = async (req, res) => {
     try {
         const userId = req.user._id;
-        const patientProfile = await Patient.findOne({ userId }).populate("userId", "name email phone");
+        let patientProfile = await Patient.findOne({ userId }).populate("userId", "name email phone");
 
         if (!patientProfile) {
-            return res.status(404).json({
-                success: false,
-                message: "Patient profile not found.",
+            patientProfile = await Patient.create({
+                userId,
+                dateOfBirth: new Date("2000-01-01"),
+                gender: "PREFER_NOT_TO_SAY",
+                address: "Primary Residence",
+                emergencyContact: {
+                    name: req.user.name || "Primary Contact",
+                    relationship: "Self/Family",
+                    phone: req.user.phone || "0000000000",
+                },
             });
+            patientProfile = await Patient.findById(patientProfile._id).populate("userId", "name email phone");
         }
 
         return res.status(200).json({
@@ -61,11 +69,18 @@ const updateEmergencyProfile = async (req, res) => {
             emergencyAccessEnabled,
         } = req.body;
 
-        const patientProfile = await Patient.findOne({ userId });
+        let patientProfile = await Patient.findOne({ userId });
         if (!patientProfile) {
-            return res.status(404).json({
-                success: false,
-                message: "Patient profile not found.",
+            patientProfile = await Patient.create({
+                userId,
+                dateOfBirth: new Date("2000-01-01"),
+                gender: "PREFER_NOT_TO_SAY",
+                address: "Primary Residence",
+                emergencyContact: {
+                    name: req.user.name || "Primary Contact",
+                    relationship: "Self/Family",
+                    phone: req.user.phone || "0000000000",
+                },
             });
         }
 
@@ -209,7 +224,7 @@ const accessEmergencyInfo = async (req, res) => {
 /**
  * @desc    Get emergency access logs for authenticated patient
  * @route   GET /api/emergency/logs
- * @access  Private (Patient, Admin)
+ * @access  Private (Patient, Admin, Doctor)
  */
 const getEmergencyAccessLogs = async (req, res) => {
     try {
@@ -222,11 +237,19 @@ const getEmergencyAccessLogs = async (req, res) => {
             patientId = req.query.patientId;
         }
 
-        if (!patientId) {
-            return res.status(200).json({ success: true, count: 0, data: [] });
+        let query = {};
+        if (req.user.role === "PATIENT") {
+            if (!patientId) {
+                return res.status(200).json({ success: true, count: 0, data: [] });
+            }
+            query = { patientId };
+        } else if (req.user.role === "DOCTOR") {
+            query = patientId ? { patientId } : { accessedByUserId: req.user._id };
+        } else if (patientId) {
+            query = { patientId };
         }
 
-        const logs = await EmergencyAccessLog.find({ patientId })
+        const logs = await EmergencyAccessLog.find(query)
             .populate("accessedByUserId", "name email role")
             .sort({ accessGrantedAt: -1 });
 

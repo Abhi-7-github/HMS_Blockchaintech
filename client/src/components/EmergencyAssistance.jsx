@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import {
+    getCurrentUser,
     getPatientEmergencyProfile,
     updateEmergencyProfile as apiUpdateEmergencyProfile,
     accessEmergencyInfo,
@@ -9,40 +10,50 @@ import { useLanguage } from "../i18n/i18nContext";
 
 const EmergencyAssistance = () => {
     const { t } = useLanguage();
+    const [currentUser, setCurrentUser] = useState(null);
     const [profile, setProfile] = useState(null);
     const [accessLogs, setAccessLogs] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isEditing, setIsEditing] = useState(false);
     const [isRequestingAccess, setIsRequestingAccess] = useState(false);
+    const [targetPatientId, setTargetPatientId] = useState("");
     const [accessReason, setAccessReason] = useState("Critical Medical Emergency Triage");
     const [accessResult, setAccessResult] = useState(null);
 
     const [formData, setFormData] = useState({
-        bloodGroup: "O+",
-        allergies: "Penicillin, Latex",
-        chronicConditions: "Mild Asthma",
-        importantMedicalNotes: "Wears medical alert bracelet for penicillin allergy. No blood thinners.",
-        contactName: "Eleanor Vance",
-        contactRelationship: "Spouse",
-        contactPhone: "+1 (555) 019-2834",
+        bloodGroup: "",
+        allergies: "",
+        chronicConditions: "",
+        importantMedicalNotes: "",
+        contactName: "",
+        contactRelationship: "",
+        contactPhone: "",
         emergencyAccessEnabled: true,
     });
 
     const fetchData = async () => {
         setIsLoading(true);
         try {
-            const [profileRes, logsRes] = await Promise.all([
-                getPatientEmergencyProfile().catch(() => null),
-                getEmergencyAccessLogs().catch(() => ({ data: [] })),
-            ]);
+            const userRes = await getCurrentUser().catch(() => null);
+            const user = userRes?.user || null;
+            setCurrentUser(user);
+            const role = (user?.role || "").toUpperCase();
+
+            // Only patients have an individual patient emergency profile
+            let profileRes = null;
+            if (role === "PATIENT") {
+                profileRes = await getPatientEmergencyProfile().catch(() => null);
+            }
+
+            const logsRes = await getEmergencyAccessLogs().catch(() => ({ data: [] }));
 
             if (profileRes && profileRes.success && profileRes.data) {
                 const data = profileRes.data;
                 setProfile(data);
                 setFormData({
-                    bloodGroup: data.bloodGroup || "O+",
-                    allergies: data.allergies || "None reported",
-                    chronicConditions: data.chronicConditions || "None reported",
+                    bloodGroup: data.bloodGroup || "",
+                    allergies: data.allergies || "",
+                    chronicConditions: data.chronicConditions || "",
                     importantMedicalNotes: data.importantMedicalNotes || "",
                     contactName: data.emergencyContact?.name || "",
                     contactRelationship: data.emergencyContact?.relationship || "",
@@ -94,17 +105,22 @@ const EmergencyAssistance = () => {
     };
 
     const handleTriggerEmergencyAccess = async () => {
-        if (!profile?.patientId) {
-            alert("Patient profile ID not found.");
+        const patientIdToQuery = (currentUser?.role === "PATIENT" ? profile?.patientId : targetPatientId)?.trim();
+        if (!patientIdToQuery) {
+            alert("Please specify a valid Patient ID for emergency triage lookup.");
             return;
         }
 
         try {
-            const res = await accessEmergencyInfo(profile.patientId, accessReason);
+            const res = await accessEmergencyInfo(patientIdToQuery, accessReason);
             if (res && res.success) {
                 setAccessResult(res);
                 setIsRequestingAccess(false);
-                fetchData(); // Refresh audit logs
+                // Refresh audit logs
+                const logsRes = await getEmergencyAccessLogs().catch(() => ({ data: [] }));
+                if (logsRes && logsRes.success) {
+                    setAccessLogs(logsRes.data || []);
+                }
             }
         } catch (err) {
             console.error("Emergency access request failed:", err);
@@ -168,19 +184,30 @@ const EmergencyAssistance = () => {
                     </div>
 
                     <div className="flex items-center space-x-3">
-                        <button
-                            onClick={() => setIsEditing(!isEditing)}
-                            className="py-1.5 px-3.5 bg-[#212842] hover:bg-[#181E32] text-[#F0E7D5] text-xs font-bold rounded-sm transition cursor-pointer"
-                        >
-                            {isEditing ? "Cancel Editing" : "✏️ Edit Emergency Profile"}
-                        </button>
+                        {currentUser?.role === "PATIENT" ? (
+                            <>
+                                <button
+                                    onClick={() => setIsEditing(!isEditing)}
+                                    className="py-1.5 px-3.5 bg-[#212842] hover:bg-[#181E32] text-[#F0E7D5] text-xs font-bold rounded-sm transition cursor-pointer"
+                                >
+                                    {isEditing ? "Cancel Editing" : "✏️ Edit Emergency Profile"}
+                                </button>
 
-                        <button
-                            onClick={() => setIsRequestingAccess(true)}
-                            className="py-1.5 px-3.5 bg-red-700 hover:bg-red-800 text-white text-xs font-bold rounded-sm transition cursor-pointer"
-                        >
-                            🔓 Explicit Triage Access
-                        </button>
+                                <button
+                                    onClick={() => setIsRequestingAccess(true)}
+                                    className="py-1.5 px-3.5 bg-red-700 hover:bg-red-800 text-white text-xs font-bold rounded-sm transition cursor-pointer"
+                                >
+                                    🔓 Explicit Triage Access
+                                </button>
+                            </>
+                        ) : (
+                            <button
+                                onClick={() => setIsRequestingAccess(true)}
+                                className="py-1.5 px-3.5 bg-red-700 hover:bg-red-800 text-white text-xs font-bold rounded-sm transition cursor-pointer"
+                            >
+                                Request Patient Emergency Triage
+                            </button>
+                        )}
                     </div>
                 </div>
 
@@ -312,8 +339,8 @@ const EmergencyAssistance = () => {
                                     Vital Blood Group & Allergies
                                 </span>
                                 <div className="flex items-center space-x-3 my-2">
-                                    <span className="text-3xl font-mono font-bold bg-red-700 text-white px-3 py-1 rounded-sm">
-                                        {profile?.bloodGroup || "O+"}
+                                    <span className="text-2xl font-mono font-bold bg-red-700 text-white px-3 py-1 rounded-sm">
+                                        {profile?.bloodGroup || "Not Set"}
                                     </span>
                                     <span className="text-xs font-semibold text-[#212842]/80">
                                         Verified Patient Blood Type
@@ -321,7 +348,7 @@ const EmergencyAssistance = () => {
                                 </div>
                                 <div className="mt-3 pt-2 border-t border-[#212842]/15 text-xs">
                                     <span className="font-bold block text-[#212842]">Known Allergies:</span>
-                                    <span className="text-red-700 font-semibold">{profile?.allergies || "None reported"}</span>
+                                    <span className="text-red-700 font-semibold">{profile?.allergies || "None recorded"}</span>
                                 </div>
                             </div>
                         </div>
@@ -385,6 +412,20 @@ const EmergencyAssistance = () => {
                             You are requesting emergency triage access. This action will log your identity, timestamp, and IP address for <strong>Blockchain Audit Trail Verification</strong>.
                         </p>
 
+                        {currentUser?.role !== "PATIENT" && (
+                            <div className="space-y-2 text-xs">
+                                <label className="block font-bold">Target Patient ID (MongoDB ID):</label>
+                                <input
+                                    type="text"
+                                    placeholder="Enter Patient ID (e.g. 660f89a...)"
+                                    value={targetPatientId}
+                                    onChange={(e) => setTargetPatientId(e.target.value)}
+                                    className="w-full p-2.5 bg-[#F0E7D5] border border-[#212842]/30 rounded-sm font-mono text-xs"
+                                    required
+                                />
+                            </div>
+                        )}
+
                         <div className="space-y-2 text-xs">
                             <label className="block font-bold">Reason for Access:</label>
                             <input
@@ -416,11 +457,42 @@ const EmergencyAssistance = () => {
 
             {/* ACCESS RESULT DISPLAY */}
             {accessResult && (
-                <div className="bg-[#FAF6EE] border border-emerald-600/40 p-5 rounded-md space-y-3">
+                <div className="bg-[#FAF6EE] border-2 border-emerald-700/60 p-5 rounded-md space-y-4 shadow-sm">
                     <div className="flex items-center space-x-2 text-emerald-800 font-bold text-sm">
                         <span>✓</span>
-                        <span>Emergency Access Granted & Logged on Blockchain</span>
+                        <span>Emergency Triage Card Unlocked & Audit Logged on Blockchain</span>
                     </div>
+
+                    {accessResult.emergencyProfile && (
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs bg-[#F0E7D5] p-4 rounded-sm border border-[#212842]/15">
+                            <div>
+                                <span className="font-bold text-[10px] uppercase text-[#212842]/70 block mb-1">Patient Details & Blood Type</span>
+                                <h4 className="text-base font-bold text-[#212842]">{accessResult.emergencyProfile.name}</h4>
+                                <span className="inline-block mt-1 px-3 py-1 bg-red-700 text-white font-mono font-bold text-xs rounded-sm">
+                                    Blood Group: {accessResult.emergencyProfile.bloodGroup}
+                                </span>
+                            </div>
+
+                            <div>
+                                <span className="font-bold text-[10px] uppercase text-[#212842]/70 block mb-1">Allergies & Conditions</span>
+                                <p className="mb-1"><strong className="text-red-700">Allergies:</strong> {accessResult.emergencyProfile.allergies}</p>
+                                <p><strong>Chronic Conditions:</strong> {accessResult.emergencyProfile.chronicConditions}</p>
+                            </div>
+
+                            <div>
+                                <span className="font-bold text-[10px] uppercase text-[#212842]/70 block mb-1">Emergency Contact</span>
+                                <h5 className="font-bold text-sm text-[#212842]">
+                                    {accessResult.emergencyProfile.emergencyContact?.name} ({accessResult.emergencyProfile.emergencyContact?.relationship})
+                                </h5>
+                                <a
+                                    href={`tel:${accessResult.emergencyProfile.emergencyContact?.phone || ""}`}
+                                    className="inline-block mt-2 py-1 px-3 bg-[#212842] text-[#F0E7D5] font-bold text-xs rounded-sm"
+                                >
+                                    📞 {accessResult.emergencyProfile.emergencyContact?.phone || "No Phone"}
+                                </a>
+                            </div>
+                        </div>
+                    )}
                     <div className="text-xs font-mono bg-[#F0E7D5] p-3 rounded-sm space-y-1">
                         <p><strong>Log ID:</strong> {accessResult.accessLog?.id}</p>
                         <p><strong>Granted At:</strong> {accessResult.accessLog?.accessGrantedAt}</p>

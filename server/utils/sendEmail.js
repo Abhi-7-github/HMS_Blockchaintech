@@ -68,6 +68,62 @@ const sendOTP = async (to, otp) => {
 };
 
 /**
+ * Sends Password Reset OTP Email
+ * @param {string} to - Recipient email address
+ * @param {string} otp - 6-digit OTP code
+ * @param {string} role - User role (PATIENT, DOCTOR, PHARMACY)
+ */
+const sendPasswordResetOTP = async (to, otp, role = "User") => {
+    const appName = process.env.APP_NAME || "AmedicK";
+    const otpExpireMinutes = process.env.OTP_EXPIRE_MINUTES || 10;
+    const formattedRole = role.charAt(0).toUpperCase() + role.slice(1).toLowerCase();
+    const emailSubject = `${appName} - Password Reset OTP (${formattedRole} Account)`;
+    const emailHtml = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px; background-color: #FAF6EE; color: #212842;">
+            <h2 style="color: #212842; text-align: center; margin-bottom: 4px;">${appName}</h2>
+            <p style="text-align: center; color: #7f8c8d; margin-top: 0; font-size: 13px; font-weight: bold; text-transform: uppercase;">Hospital Management System &bull; ${formattedRole} Portal</p>
+            <hr style="border: 0; border-top: 1px solid #212842; opacity: 0.2;" />
+            <p>Hello,</p>
+            <p>We received a request to reset the password for your <strong>${formattedRole}</strong> account registered with <strong>${appName}</strong>.</p>
+            <p>Please enter the following 6-digit One-Time Password (OTP) to securely complete your password reset:</p>
+            <div style="text-align: center; margin: 25px 0;">
+                <span style="font-size: 32px; font-weight: bold; letter-spacing: 6px; color: #212842; background-color: #F0E7D5; padding: 12px 28px; border-radius: 6px; border: 1.5px dashed #212842; display: inline-block;">${otp}</span>
+            </div>
+            <div style="background-color: #F0E7D5; padding: 12px 16px; border-left: 4px solid #212842; margin: 15px 0; border-radius: 4px; font-size: 12px;">
+                <strong>Security Notice:</strong> This OTP is valid for <strong>${otpExpireMinutes} minutes</strong>. Never share this code with anyone. AmedicK staff will never ask for your OTP.
+            </div>
+            <p style="font-size: 12px; color: #555;">If you did not request this password reset, please ignore this email or contact support immediately.</p>
+            <br/>
+            <p style="font-size: 11px; color: #7f8c8d; text-align: center;">${appName} Security &bull; Cryptographic Health Records &copy; ${new Date().getFullYear()}</p>
+        </div>
+    `;
+
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+        console.log("\n========================================================");
+        console.log(`[TEST MODE] SMTP Credentials not set in .env`);
+        console.log(`[OTP EMULATOR] Password Reset OTP for ${to} (${formattedRole}): ${otp}`);
+        console.log("========================================================\n");
+        return { success: true, simulated: true };
+    }
+
+    try {
+        const transporter = createTransporter();
+        const info = await transporter.sendMail({
+            from: process.env.EMAIL_FROM,
+            to,
+            subject: emailSubject,
+            html: emailHtml,
+        });
+
+        console.log(`Password Reset OTP Email sent to ${to}: ${info.messageId}`);
+        return { success: true, messageId: info.messageId };
+    } catch (error) {
+        console.error(`Failed to send password reset OTP email to ${to}:`, error.message);
+        throw error;
+    }
+};
+
+/**
  * Sends notification email to doctor when profile & certificates are submitted (Status: PENDING)
  */
 const sendDoctorPendingEmail = async (to, doctorName) => {
@@ -200,6 +256,7 @@ const sendDoctorRejectedEmail = async (to, doctorName, rejectionReason) => {
 
 module.exports = {
     sendOTP,
+    sendPasswordResetOTP,
     sendDoctorPendingEmail,
     sendDoctorApprovedEmail,
     sendDoctorRejectedEmail,
